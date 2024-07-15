@@ -1,30 +1,36 @@
+from pathlib import Path
+from typing import List
+
 import cv2
 import random
 import argparse
 
 
-def display_random_frame(file: str) -> None:
-    vidcap = cv2.VideoCapture(file)
+def display_random_frame(files: List[Path]) -> None:
+    vidcaps = [cv2.VideoCapture(str(file.absolute())) for file in files]
 
-    total_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-    random_frame_idx = random.randint(0, total_frames)
+    min_total_frames = min([int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)) for vidcap in vidcaps])
 
-    vidcap.set(cv2.CAP_PROP_POS_FRAMES, random_frame_idx)
+    random_frame_idx = random.randint(0, min_total_frames)
 
-    if vidcap.isOpened():
-        success, image = vidcap.read()
+    for i, vidcap in enumerate(vidcaps):
+        if vidcap.isOpened():
+            vidcap.set(cv2.CAP_PROP_POS_FRAMES, random_frame_idx)
+            success, image = vidcap.read()
+            
+            if success:
+                cv2.imshow(f'Random frame in video {i + 1}', image)
 
-        if success:
-            cv2.imshow(f'Random frame', image)
-            cv2.waitKey(0)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=argparse.FileType('r'))
+    parser.add_argument('files', type=Path, nargs='+')
     args = parser.parse_args()
 
-    display_random_frame(args.file.name)
+    display_random_frame(args.files)
 
 
 if __name__ == '__main__':
