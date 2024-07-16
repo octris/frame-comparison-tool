@@ -1,55 +1,40 @@
 from pathlib import Path
-from typing import List, Optional
-from cv2_utilities import put_bordered_text, Align
-from frame_type import FrameType
+from typing import List
+from video_loader import VideoLoader
 import cv2
 import random
 import argparse
+import tkinter as tk
+from tkinter import filedialog
 
 
-class VideoLoader:
-    def __init__(self, file_path: Path) -> None:
-        self._file_path = file_path
-        self.video_capture = cv2.VideoCapture(str(self._file_path.absolute()))
-        self._curr_frame_idx = 0
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
 
-    @property
-    def file_name(self) -> str:
-        return self._file_path.name
+        self._file_paths = []
 
-    @property
-    def total_frames(self) -> int:
-        return int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.title('Frame Comparison Tool')
+        self.geometry('500x500')
 
-    def set_frame(self, frame_idx) -> None:
-        if self.video_capture.isOpened():
-            self.video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
-            self._curr_frame_idx = frame_idx
+        self.rowconfigure(0, minsize=400, weight=4)
+        self.rowconfigure(1, minsize=100, weight=1)
+        self.columnconfigure(0, minsize=500)
 
-    def get_frame(self) -> Optional[cv2.typing.MatLike]:
-        if self.video_capture.isOpened():
-            success, image = self.video_capture.read()
-            if success:
-                return image
-            else:
-                raise RuntimeError(f'Could not read image.')
-        else:
-            raise RuntimeError(f'Video capture not opened.')
+        self.frame_image = tk.Frame(self, bg='white')
+        self.frame_image.grid(row=0, column=0, sticky="nsew")
 
-    def get_frame_type(self) -> FrameType:
-        frame_type = int(self.video_capture.get(cv2.CAP_PROP_FRAME_TYPE))
-        return FrameType(frame_type)
+        self.frame_button = tk.Frame(self)
+        self.frame_button.grid(row=1, column=0, sticky="nsew")
 
-    def get_composited_image(self) -> cv2.typing.MatLike:
-        frame = self.get_frame()
-        frame_type = self.get_frame_type()
-        source = self.file_name
+        self.button = tk.Button(self.frame_button, text='Add source', command=self._open_file)
+        self.button.pack()
 
-        frame = put_bordered_text(img=frame, text=f'SOURCE: {source}', origin=(0, 0))
-        frame = put_bordered_text(img=frame,
-                                  text=f'FRAME TYPE: {frame_type}\nFRAME: {self._curr_frame_idx}/{self.total_frames}',
-                                  origin=(frame.shape[1], 0), align=Align.RIGHT)
-        return frame
+    def _open_file(self):
+        file_path = filedialog.askopenfilename()
+        if file_path:
+            self._file_paths.append(Path(file_path))
+            display_random_frame(self._file_paths)
 
 
 def display_random_frame(file_paths: List[Path]) -> None:
@@ -72,7 +57,10 @@ def main() -> None:
     parser.add_argument('file_paths', type=Path, nargs='+')
     args = parser.parse_args()
 
-    display_random_frame(file_paths=args.file_paths)
+    # display_random_frame(file_paths=args.file_paths)
+
+    app = App()
+    app.mainloop()
 
 
 if __name__ == '__main__':
