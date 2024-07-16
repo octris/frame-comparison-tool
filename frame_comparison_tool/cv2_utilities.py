@@ -20,18 +20,19 @@ _ALIGN = Align.LEFT
 
 
 def get_text_size(text: str,
-                  font_face: int = _FONT_FACE,
-                  font_scale: float = _FONT_SCALE,
-                  thickness: int = _THICKNESS) -> Tuple[int, int]:
-    size, _ = cv2.getTextSize(text=text, fontFace=font_face, fontScale=font_scale, thickness=thickness)
+                  font_face: int,
+                  font_scale: float,
+                  thickness: int) -> Tuple[int, int]:
+    size, baseline = cv2.getTextSize(text=text, fontFace=font_face, fontScale=font_scale, thickness=thickness)
     width, height = size
+    height += baseline
 
     return width, height
 
 
 def put_bordered_text(img: cv2.typing.MatLike,
                       text: str,
-                      org: cv2.typing.Point,
+                      origin: cv2.typing.Point,
                       align: Align = _ALIGN,
                       font_face: int = _FONT_FACE,
                       font_scale: float = _FONT_SCALE,
@@ -39,14 +40,28 @@ def put_bordered_text(img: cv2.typing.MatLike,
                       thickness: int = _THICKNESS,
                       border_color: cv2.typing.Scalar = _BORDER_COLOR,
                       border_thickness: int = _BORDER_THICKNESS) -> cv2.typing.MatLike:
-    text_width, text_height = get_text_size(text=text, font_face=font_face, font_scale=font_scale, thickness=thickness)
+    y_offset = origin[1]
 
-    org = (org[0], org[1] + text_height)
+    for line in text.splitlines():
+        text_width, text_height = get_text_size(text=line, font_face=font_face, font_scale=font_scale,
+                                                thickness=thickness)
 
-    img = cv2.putText(img=img, text=text, org=org, fontFace=font_face, fontScale=font_scale,
-                      color=border_color, thickness=thickness)
+        x_offset = origin[0]
+        y_offset += text_height
 
-    img = cv2.putText(img=img, text=text, org=org, fontFace=font_face, fontScale=font_scale,
-                      color=color, thickness=thickness - border_thickness)
+        if align == Align.LEFT:
+            pass
+        elif align == Align.CENTER:
+            x_offset -= int(text_width / 2)
+        elif align == Align.RIGHT:
+            x_offset -= text_width
+        else:
+            raise ValueError(f'Invalid align value supplied: {align}')
+
+        img = cv2.putText(img=img, text=line, org=(x_offset, y_offset), fontFace=font_face, fontScale=font_scale,
+                          color=border_color, thickness=thickness)
+
+        img = cv2.putText(img=img, text=line, org=(x_offset, y_offset), fontFace=font_face, fontScale=font_scale,
+                          color=color, thickness=thickness - border_thickness)
 
     return img
