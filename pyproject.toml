@@ -11,6 +11,7 @@ python = "^3.12"
 loguru = "^0.7.2"
 opencv-contrib-python = "^4.10.0.84"
 pillow = "^10.4.0"
+llist = "^0.7.1"
 
 [build-system]
 requires = ["poetry-core"]

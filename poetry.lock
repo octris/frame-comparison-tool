@@ -12,6 +12,16 @@ files = [
 ]
 
 [[package]]
+name = "llist"
+version = "0.7.1"
+description = "Linked list data structures for Python"
+optional = false
+python-versions = "*"
+files = [
+    {file = "llist-0.7.1.tar.gz", hash = "sha256:6f73a120136897a0bce61c202188f4f3891d9f70aa906d21fc1ee1cf43659eca"},
+]
+
+[[package]]
 name = "loguru"
 version = "0.7.2"
 description = "Python logging made (stupidly) simple"
@@ -216,4 +226,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "dccc92b123a7651c4f1e4af7bb08498468c9819ea7eaf1560d4ddbe72fa25897"
+content-hash = "ea2d898413e62b3cf95f7d3fbc6ed9c4f99684723c8b136b4ee9f42fca791625"
