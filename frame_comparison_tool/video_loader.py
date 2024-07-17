@@ -8,7 +8,7 @@ import argparse
 
 
 class VideoLoader:
-    def __init__(self, file_path: Path) -> None:
+    def __init__(self, file_path: Path):
         self._file_path = file_path
         self.video_capture = cv2.VideoCapture(str(self._file_path.absolute()))
         self._curr_frame_idx = 0
