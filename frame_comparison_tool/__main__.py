@@ -1,40 +1,35 @@
 from pathlib import Path
 from typing import List
-from video_loader import VideoLoader
-import cv2
+from frame_loader import FrameLoader
 import random
 import argparse
 import tkinter as tk
 from tkinter import filedialog
-from PIL import Image, ImageTk
+from PIL import Image
 
 
-# TODO: Load frames from multiple videos
 # TODO: Add args to Controller
 
+
 class Controller:
-    def __init__(self):
-        self.sources: List[Path] = []
-        self.frames: List[ImageTk.PhotoImage] = []
-        self.video_loaders: List[VideoLoader] = []
-        self.curr_idx = 0
+    def __init__(self, n_samples=5):
+        self.sources: List[FrameLoader] = []
+        self.n_samples = n_samples
+        self.curr_src_idx = 0
+        self.curr_frame_idx = 0
+        self._frame_ids = []
 
     def add_source(self, file_path: Path) -> None:
-        self.sources.append(file_path)
-        self.video_loaders.append(VideoLoader(file_path=file_path))
-        self.load_frames()
+        self.sources.append(FrameLoader(Path(file_path)))
+        self._sample_frame_ids()
 
-    def load_frames(self, n: int = 5) -> None:
-        if len(self.video_loaders) > 0:
-            curr_video_loader = self.video_loaders[-1]
-            total_frames = curr_video_loader.total_frames
+    def _sample_frame_ids(self) -> None:
+        random.seed(42)
+        min_total_frames = min([source.total_frames for source in self.sources])
+        self._frame_ids = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
 
-            random_frame_ids = [random.randint(0, total_frames) for _ in range(n)]
-
-            for idx in random_frame_ids:
-                curr_video_loader.set_frame(idx)
-                frame = curr_video_loader.get_composited_image()
-                self.frames.append(ImageTk.PhotoImage(image=Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))))
+        for source in self.sources:
+            source.sample_frames(self._frame_ids)
 
 
 class App(tk.Tk):
@@ -62,16 +57,29 @@ class App(tk.Tk):
         self.button = tk.Button(self.frame_sources, text='Add source', command=self._open_file)
         self.button.pack()
 
-        self.bind("<Left>", self._display_next_frame)
-        self.bind("<Right>", self._display_next_frame)
+        self.bind('<Left>', self._display_next_frame)
+        self.bind('<Right>', self._display_next_frame)
+
+        self.bind('<Up>', self._change_source)
+        self.bind('<Down>', self._change_source)
+
+    def _change_source(self, event) -> None:
+        if event.keysym == 'Down' and self.controller.curr_src_idx > 0:
+            self.controller.curr_src_idx -= 1
+        elif event.keysym == 'Up' and self.controller.curr_src_idx < len(self.controller.sources) - 1:
+            self.controller.curr_src_idx += 1
+
+        frame = self.controller.sources[self.controller.curr_src_idx].frames[self.controller.curr_frame_idx]
+        self._display_frame(frame)
 
     def _display_next_frame(self, event) -> None:
-        if event.keysym == "Left" and self.controller.curr_idx > 0:
-            self.controller.curr_idx -= 1
-        elif event.keysym == "Right" and self.controller.curr_idx < len(self.controller.frames) - 1:
-            self.controller.curr_idx += 1
+        if event.keysym == 'Left' and self.controller.curr_frame_idx > 0:
+            self.controller.curr_frame_idx -= 1
 
-        frame = self.controller.frames[self.controller.curr_idx]
+        elif event.keysym == 'Right' and self.controller.curr_frame_idx < self.controller.n_samples - 1:
+            self.controller.curr_frame_idx += 1
+
+        frame = self.controller.sources[self.controller.curr_src_idx].frames[self.controller.curr_frame_idx]
         self._display_frame(frame)
 
     def _display_frame(self, frame: Image) -> None:
@@ -80,7 +88,8 @@ class App(tk.Tk):
     def _open_file(self) -> None:
         file_path = filedialog.askopenfilename()
         self.controller.add_source(Path(file_path))
-        self._display_frame(self.controller.frames[0])
+        self._display_frame(
+            self.controller.sources[self.controller.curr_src_idx].frames[self.controller.curr_frame_idx])
 
 
 def main():
