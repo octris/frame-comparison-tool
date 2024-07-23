@@ -6,11 +6,12 @@ authors = ["Ana Anić Banić <git@ana.banic.hr>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
+python = ">=3.12,<3.13"
 
 loguru = "^0.7.2"
 opencv-contrib-python = "^4.10.0.84"
 pillow = "^10.4.0"
+pyside6 = "^6.7.2"
 
 [build-system]
 requires = ["poetry-core"]

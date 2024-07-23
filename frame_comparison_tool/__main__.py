@@ -3,9 +3,10 @@ from pathlib import Path
 from typing import List
 from frame_loader import FrameLoader
 import random
-import tkinter as tk
-from tkinter import filedialog
-from PIL import Image
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
+    QLabel, QFileDialog
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent
 
 
 class Controller:
@@ -15,6 +16,10 @@ class Controller:
         self.curr_src_idx = 0
         self.curr_frame_idx = 0
         self._frame_ids: List[int] = []
+
+    @property
+    def frame_ids(self) -> List[int]:
+        return self._frame_ids
 
     def add_source(self, file_path: Path) -> bool:
         file_path_str = str(file_path.absolute())
@@ -36,104 +41,87 @@ class Controller:
             source.sample_frames(self._frame_ids)
 
 
-class App(tk.Tk):
+class App(QMainWindow):
     def __init__(self):
         super().__init__()
 
         self.controller = Controller()
 
-        self.title('Frame Comparison Tool')
-        self.geometry('1000x600')
+        self.setGeometry(100, 100, 800, 500)
+        self.setWindowTitle(f'Frame Comparison Tool')
 
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=0)
-        self.columnconfigure(0, weight=1)
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.central_layout = QVBoxLayout(self.central_widget)
 
-        self.frame_images = tk.Frame(self, bg='white')
-        self.frame_images.grid(row=0, column=0, sticky=tk.NSEW)
+        self.frame_widget = QLabel()
+        self.frame_widget.setStyleSheet('background-color: white')
+        self.central_layout.addWidget(self.frame_widget, stretch=4)
 
-        self.image_label = tk.Label(master=self.frame_images, bg='white')
-        self.image_label.pack()
+        self.config_widget = QWidget()
+        self.config_widget.setStyleSheet('background-color: #F8F8F8')
+        self.central_layout.addWidget(self.config_widget, stretch=1)
 
-        self.frame_sources = tk.Frame(self)
-        self.frame_sources.grid(row=1, column=0, sticky=tk.EW)
+        self.config_layout = QHBoxLayout(self.config_widget)
 
-        self.button = tk.Button(self.frame_sources, text='Add Source', command=self._add_source, width=8)
-        self.button.grid(sticky=tk.E)
+        self.add_source_button = QPushButton('Add Source', self.config_widget)
+        self.add_source_button.clicked.connect(self._add_source)
+        self.config_layout.addWidget(self.add_source_button)
 
-        self.bind('<Left>', self._display_next_frame)
-        self.bind('<Right>', self._display_next_frame)
+        self.mode_dropdown = QComboBox(self.config_widget)
+        self.mode_dropdown.addItems(['Cropped', 'Scaled'])
+        self.config_layout.addWidget(self.mode_dropdown)
 
-        self.bind('<Up>', self._change_displayed_source)
-        self.bind('<Down>', self._change_displayed_source)
+        self.setLayout(self.central_layout)
+        self.show()
 
-    def _change_displayed_source(self, event) -> None:
-        if event.keysym == 'Down' and self.controller.curr_src_idx > 0:
-            self.controller.curr_src_idx -= 1
-        elif event.keysym == 'Up' and self.controller.curr_src_idx < len(self.controller.sources) - 1:
-            self.controller.curr_src_idx += 1
+        self.central_widget.setFocus()
+        self.central_widget.keyPressEvent = self._key_press_event
 
-        frame = list(self.controller.sources.values())[self.controller.curr_src_idx].frames[
-            self.controller.curr_frame_idx]
-        self._display_frame(frame)
-
-    def _display_next_frame(self, event) -> None:
-        if event.keysym == 'Left' and self.controller.curr_frame_idx > 0:
-            self.controller.curr_frame_idx -= 1
-
-        elif event.keysym == 'Right' and self.controller.curr_frame_idx < self.controller.n_samples - 1:
-            self.controller.curr_frame_idx += 1
-
-        frame = list(self.controller.sources.values())[self.controller.curr_src_idx].frames[
-            self.controller.curr_frame_idx]
-        self._display_frame(frame)
-
-    def _display_frame(self, frame: Image) -> None:
-        self.image_label.configure(image=frame)
+    def _key_press_event(self, event: QKeyEvent) -> None:
+        if event.key() == Qt.Key.Key_Left:
+            self._display_next_frame(-1)
+        elif event.key() == Qt.Key.Key_Right:
+            self._display_next_frame(1)
+        elif event.key() == Qt.Key.Key_Down:
+            self._change_displayed_source(-1)
+        elif event.key() == Qt.Key.Key_Right:
+            self._change_displayed_source(1)
 
     def _add_source(self) -> None:
-        file_path = filedialog.askopenfilename()
+        file_path, _ = QFileDialog.getOpenFileName(self)
+        if file_path and self.controller.add_source(Path(file_path)):
+            self._update_display()
 
-        if len(file_path) == 0 or not self.controller.add_source(Path(file_path)):
-            return
+    def _display_next_frame(self, direction: int) -> None:
+        self.controller.curr_frame_idx += direction
+        self.controller.curr_frame_idx = max(0, min(self.controller.curr_frame_idx,
+                                                    len(self.controller.frame_ids) - 1))
+        self._update_display()
 
-        self.button.destroy()
+    def _change_displayed_source(self, direction: int) -> None:
+        self.controller.curr_src_idx += direction
+        self.controller.curr_src_idx = max(0, min(self.controller.curr_src_idx,
+                                                  len(self.controller.sources) - 1))
+        self._update_display()
 
-        frame = tk.Frame(self.frame_sources)
-        frame.grid(sticky=tk.EW)
-        frame.columnconfigure(0, weight=1)
-        frame.columnconfigure(1, weight=0)
-        frame.columnconfigure(2, weight=0)
+    def _update_display(self) -> None:
+        if self.controller.sources:
+            source = list(self.controller.sources.values())[self.controller.curr_src_idx]
+            frame = source.frames[self.controller.curr_frame_idx]
 
-        source_label = tk.Label(frame, text=f'Source: {file_path}')
-        source_label.grid(row=0, column=0)
+            height, width, channels = frame.shape
+            bytes_per_line = 3 * width
+            image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
 
-        def del_command():
-            if file_path in self.controller.sources:
-                self.controller.sources.pop(file_path)
-
-            if self.controller.curr_src_idx > 0 and self.controller.curr_src_idx >= len(self.controller.sources):
-                self.controller.curr_src_idx -= 1
-
-            if len(self.controller.sources) > 0:
-                self._display_frame(list(self.controller.sources.values())[self.controller.curr_src_idx].
-                                    frames[self.controller.curr_frame_idx])
-
-            frame.destroy()
-
-        delete_btn = tk.Button(frame, text='Delete', width=8, command=del_command)
-        delete_btn.grid(row=0, column=1)
-
-        self.button = tk.Button(self.frame_sources, text='Add Source', command=self._add_source, width=8)
-        self.button.grid(sticky=tk.E)
-
-        self._display_frame(
-            list(self.controller.sources.values())[self.controller.curr_src_idx].frames[self.controller.curr_frame_idx])
+            self.frame_widget.setPixmap(QPixmap.fromImage(image))
 
 
 def main():
-    app = App()
-    app.mainloop()
+    app = QApplication([])
+    window = App()
+    window.show()
+    app.exec()
 
 
 if __name__ == '__main__':
