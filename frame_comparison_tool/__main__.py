@@ -10,11 +10,11 @@ from PySide6.QtGui import QPixmap, QImage, QKeyEvent
 
 
 class Controller:
-    def __init__(self, n_samples=5):
+    def __init__(self, n_samples: int = 5):
         self.sources: OrderedDict[str, FrameLoader] = OrderedDict()
-        self.n_samples = n_samples
-        self.curr_src_idx = 0
-        self.curr_frame_idx = 0
+        self.n_samples: int = n_samples
+        self.curr_src_idx: int = 0
+        self.curr_frame_idx: int = 0
         self._frame_ids: List[int] = []
 
     @property
@@ -47,15 +47,18 @@ class App(QMainWindow):
 
         self.controller = Controller()
 
-        self.setGeometry(100, 100, 800, 500)
+        self.setGeometry(100, 100, 1000, 800)
         self.setWindowTitle(f'Frame Comparison Tool')
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.central_layout = QVBoxLayout(self.central_widget)
+        self.central_widget.keyPressEvent = self._key_press_event
 
         self.frame_widget = QLabel()
         self.frame_widget.setStyleSheet('background-color: white')
+        self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.setMinimumSize(1, 1)
         self.central_layout.addWidget(self.frame_widget, stretch=4)
 
         self.config_widget = QWidget()
@@ -68,15 +71,12 @@ class App(QMainWindow):
         self.add_source_button.clicked.connect(self._add_source)
         self.config_layout.addWidget(self.add_source_button)
 
-        self.mode_dropdown = QComboBox(self.config_widget)
-        self.mode_dropdown.addItems(['Cropped', 'Scaled'])
-        self.config_layout.addWidget(self.mode_dropdown)
+        # self.mode_dropdown = QComboBox(self.config_widget)
+        # self.mode_dropdown.addItems(['Cropped', 'Scaled'])
+        # self.config_layout.addWidget(self.mode_dropdown)
 
         self.setLayout(self.central_layout)
         self.show()
-
-        self.central_widget.setFocus()
-        self.central_widget.keyPressEvent = self._key_press_event
 
     def _key_press_event(self, event: QKeyEvent) -> None:
         if event.key() == Qt.Key.Key_Left:
@@ -85,13 +85,14 @@ class App(QMainWindow):
             self._display_next_frame(1)
         elif event.key() == Qt.Key.Key_Down:
             self._change_displayed_source(-1)
-        elif event.key() == Qt.Key.Key_Right:
+        elif event.key() == Qt.Key.Key_Up:
             self._change_displayed_source(1)
 
     def _add_source(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(self)
         if file_path and self.controller.add_source(Path(file_path)):
             self._update_display()
+        self.frame_widget.setFocus()
 
     def _display_next_frame(self, direction: int) -> None:
         self.controller.curr_frame_idx += direction
@@ -111,10 +112,11 @@ class App(QMainWindow):
             frame = source.frames[self.controller.curr_frame_idx]
 
             height, width, channels = frame.shape
-            bytes_per_line = 3 * width
-            image = QImage(frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
+            image = QImage(frame.data, width, height, QImage.Format.Format_RGB888)
 
-            self.frame_widget.setPixmap(QPixmap.fromImage(image))
+            self.frame_widget.setPixmap(QPixmap.fromImage(image)
+                                        .scaled(image.width(), image.height(),
+                                                aspectMode=Qt.AspectRatioMode.KeepAspectRatioByExpanding))
 
 
 def main():
