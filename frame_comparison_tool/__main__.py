@@ -4,9 +4,9 @@ from typing import List
 from frame_loader import FrameLoader
 import random
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
-    QLabel, QFileDialog
+    QLabel, QFileDialog, QScrollArea
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
 
 
 class Controller:
@@ -53,32 +53,47 @@ class App(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.central_layout = QVBoxLayout(self.central_widget)
-        self.central_widget.keyPressEvent = self._key_press_event
 
         self.frame_widget = QLabel()
         self.frame_widget.setStyleSheet('background-color: white')
         self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setMinimumSize(1, 1)
-        self.central_layout.addWidget(self.frame_widget, stretch=4)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidget(self.frame_widget)
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.central_layout.addWidget(self.scroll_area, stretch=4)
 
         self.config_widget = QWidget()
         self.config_widget.setStyleSheet('background-color: #F8F8F8')
+        self.config_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.central_layout.addWidget(self.config_widget, stretch=1)
 
         self.config_layout = QHBoxLayout(self.config_widget)
 
         self.add_source_button = QPushButton('Add Source', self.config_widget)
         self.add_source_button.clicked.connect(self._add_source)
+        self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.add_source_button)
 
-        # self.mode_dropdown = QComboBox(self.config_widget)
-        # self.mode_dropdown.addItems(['Cropped', 'Scaled'])
-        # self.config_layout.addWidget(self.mode_dropdown)
+        self.mode_dropdown = QComboBox(self.config_widget)
+        self.mode_dropdown.addItems(['Cropped', 'Scaled'])
+        self.mode_dropdown.currentTextChanged.connect(self._update_display)
+        self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.config_layout.addWidget(self.mode_dropdown)
 
         self.setLayout(self.central_layout)
+        self.setFocus()
         self.show()
 
-    def _key_press_event(self, event: QKeyEvent) -> None:
+    def resizeEvent(self, event: QResizeEvent):
+        self._update_display()
+
+        return super().resizeEvent(event)
+
+    def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
             self._display_next_frame(-1)
         elif event.key() == Qt.Key.Key_Right:
@@ -88,11 +103,12 @@ class App(QMainWindow):
         elif event.key() == Qt.Key.Key_Up:
             self._change_displayed_source(1)
 
+        return super().keyPressEvent(event)
+
     def _add_source(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(self)
         if file_path and self.controller.add_source(Path(file_path)):
             self._update_display()
-        self.frame_widget.setFocus()
 
     def _display_next_frame(self, direction: int) -> None:
         self.controller.curr_frame_idx += direction
@@ -114,9 +130,18 @@ class App(QMainWindow):
             height, width, channels = frame.shape
             image = QImage(frame.data, width, height, QImage.Format.Format_RGB888)
 
-            self.frame_widget.setPixmap(QPixmap.fromImage(image)
-                                        .scaled(image.width(), image.height(),
-                                                aspectMode=Qt.AspectRatioMode.KeepAspectRatioByExpanding))
+            current_mode = self.mode_dropdown.currentText()
+            pixmap = QPixmap.fromImage(image)
+
+            if current_mode == 'Scaled':
+                pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
+            elif current_mode == 'Cropped':
+                pass
+            else:
+                raise ValueError("Invalid mode")
+
+            self.frame_widget.setPixmap(pixmap)
+            self.setFocus()
 
 
 def main():
