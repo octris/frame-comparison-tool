@@ -1,12 +1,8 @@
-from pathlib import Path
-from typing import List, Optional
-
-import numpy
-
-from cv2_utilities import put_bordered_text, Align
-from frame_type import FrameType
 import cv2
 import numpy as np
+from pathlib import Path
+from typing import List, Optional
+from frame_comparison_tool.utils import put_bordered_text, Align, FrameType
 
 
 class FrameLoader:
@@ -41,7 +37,7 @@ class FrameLoader:
         frame_type = int(self._video_capture.get(cv2.CAP_PROP_FRAME_TYPE))
         return FrameType(frame_type)
 
-    def _get_composited_image(self, frame_idx) -> numpy.ndarray:
+    def _get_composited_image(self, frame_idx) -> np.ndarray:
         if self._video_capture.isOpened():
             self._video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
 
