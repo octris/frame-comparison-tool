@@ -1,8 +1,10 @@
+from functools import partial
 from pathlib import Path
-from typing import override
+from typing import override, List, Optional
 
+import numpy as np
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
-    QLabel, QFileDialog, QScrollArea, QErrorMessage
+    QLabel, QFileDialog, QScrollArea
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
 
@@ -53,6 +55,8 @@ class View(QMainWindow):
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.mode_dropdown)
 
+        self.added_sources_widgets: List[QWidget] = []
+
         self.setLayout(self.central_layout)
         self.setFocus()
         self.show()
@@ -85,17 +89,48 @@ class View(QMainWindow):
         if file_path and self.presenter.add_source(Path(file_path)):
             self.presenter.update_display()
 
-    def update_display(self, frame, mode) -> None:
-        height, width, channels = frame.shape
-        image = QImage(frame.data, width, height, QImage.Format.Format_RGB888)
-        pixmap = QPixmap.fromImage(image)
+            main_widget = QWidget()
+            widget_layout = QHBoxLayout(main_widget)
+            source_label = QLabel(file_path)
+            delete_button = QPushButton('Delete')
+            delete_button.clicked.connect(partial(self.on_delete_clicked, file_path))
 
-        if mode == 'Scaled':
-            pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
-        elif mode == 'Cropped':
-            pass
+            main_widget.setLayout(widget_layout)
+            widget_layout.addWidget(source_label)
+            widget_layout.addWidget(delete_button)
+
+            self.central_layout.addWidget(main_widget)
+            self.added_sources_widgets.append(main_widget)
+
+            self.central_layout.update()
+            self.update()
+
+    def on_delete_clicked(self, file_path: str) -> None:
+        idx = self.presenter.delete_source(file_path)
+        widget_to_remove = self.added_sources_widgets.pop(idx)
+
+        widget_to_remove.setParent(None)
+        widget_to_remove.deleteLater()
+
+        self.presenter.update_display()
+
+        self.central_layout.update()
+        self.update()
+
+    def update_display(self, frame: Optional[np.ndarray], mode: str) -> None:
+        if frame is None:
+            self.frame_widget.clear()
         else:
-            raise ValueError("Invalid mode")
+            height, width, channels = frame.shape
+            image = QImage(frame.data, width, height, QImage.Format.Format_RGB888)
+            pixmap = QPixmap.fromImage(image)
 
-        self.frame_widget.setPixmap(pixmap)
-        self.setFocus()
+            if mode == 'Scaled':
+                pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
+            elif mode == 'Cropped':
+                pass
+            else:
+                raise ValueError("Invalid mode")
+
+            self.frame_widget.setPixmap(pixmap)
+            self.setFocus()

@@ -39,6 +39,24 @@ class Model:
             self._sample_frame_ids()
             return True
 
+    # TODO: Check this
+    def delete_source(self, file_path: str) -> int:
+        src_idx = list(self.sources.keys()).index(file_path)
+
+        if src_idx == len(self.sources) - 1:
+            self.curr_src_idx -= 1
+        elif src_idx == 0:
+            pass
+        else:
+            pass
+
+        if len(self.sources) == 0:
+            self.curr_frame_idx = 0
+
+        del self.sources[file_path]
+
+        return src_idx
+
     def get_current_source(self) -> FrameLoader:
         return list(self.sources.values())[self.curr_src_idx]
 

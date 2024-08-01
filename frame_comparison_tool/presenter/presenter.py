@@ -10,9 +10,16 @@ class Presenter:
         self.view = view
         self.view.set_presenter(self)
 
-    def add_source(self, file_path: Path) -> None:
+    def add_source(self, file_path: Path) -> bool:
         if self.model.add_source(file_path):
             self.update_display()
+            return True
+        else:
+            return False
+
+    # TODO: Check this
+    def delete_source(self, file_path: str) -> int:
+        return self.model.delete_source(file_path)
 
     def change_frame(self, direction: int) -> None:
         self.model.curr_frame_idx += direction
@@ -25,7 +32,10 @@ class Presenter:
         self.update_display()
 
     def update_display(self) -> None:
-        frame = self.model.get_current_frame()
-        if frame is not None:
-            mode = self.view.mode_dropdown.currentText()
+        mode = self.view.mode_dropdown.currentText()
+
+        if len(self.model.sources) == 0:
+            self.view.update_display(None, mode)
+        else:
+            frame = self.model.get_current_frame()
             self.view.update_display(frame, mode)
