@@ -39,16 +39,25 @@ class Model:
             self._sample_frame_ids()
             return True
 
-    # TODO: Check this
     def delete_source(self, file_path: str) -> int:
         src_idx = list(self.sources.keys()).index(file_path)
 
-        if src_idx == len(self.sources) - 1:
-            self.curr_src_idx -= 1
-        elif src_idx == 0:
-            pass
+        if src_idx == self.curr_src_idx:
+            if src_idx == 0:
+                pass
+            elif src_idx == len(self.sources) - 1:
+                self.curr_src_idx -= 1
+            else:
+                self.curr_src_idx -= 1
         else:
-            pass
+            if src_idx == 0:
+                self.curr_src_idx -= 1
+            elif src_idx == len(self.sources) - 1:
+                pass
+            elif src_idx < self.curr_src_idx:
+                self.curr_src_idx -= 1
+            else:
+                pass
 
         if len(self.sources) == 0:
             self.curr_frame_idx = 0
