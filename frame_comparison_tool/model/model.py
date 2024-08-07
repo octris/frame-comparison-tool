@@ -6,6 +6,7 @@ from collections import OrderedDict
 from typing import List
 
 from frame_comparison_tool.utils import FrameLoader
+from frame_comparison_tool.view import DisplayMode
 
 
 class Model:
@@ -15,6 +16,7 @@ class Model:
         self.curr_src_idx: int = 0
         self.curr_frame_idx: int = 0
         self._frame_ids: List[int] = []
+        self.curr_mode = DisplayMode.CROPPED
 
     @property
     def frame_ids(self) -> List[int]:

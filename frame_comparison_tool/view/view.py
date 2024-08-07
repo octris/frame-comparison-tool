@@ -1,7 +1,7 @@
 from enum import Enum
 from functools import partial
 from pathlib import Path
-from typing import override, List, Optional
+from typing import override, List, Optional, Tuple
 
 import numpy as np
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
@@ -63,7 +63,7 @@ class View(QMainWindow):
         self.mode_dropdown = QComboBox(self.config_widget)
         self.mode_dropdown.addItems(['Cropped', 'Scaled'])
         self.mode_dropdown.currentTextChanged.connect(
-            lambda: self.presenter.update_display() if self.presenter is not None else None)
+            lambda: self.on_mode_changed() if self.presenter is not None else None)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.mode_dropdown)
 
@@ -79,7 +79,7 @@ class View(QMainWindow):
     @override
     def resizeEvent(self, event: QResizeEvent) -> None:
         if self.presenter:
-            self.presenter.update_display()
+            self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
         return super().resizeEvent(event)
 
@@ -99,7 +99,7 @@ class View(QMainWindow):
     def on_add_source_clicked(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(self)
         if file_path and self.presenter.add_source(Path(file_path)):
-            self.presenter.update_display()
+            self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
             main_widget = QWidget()
             widget_layout = QHBoxLayout(main_widget)
@@ -124,13 +124,15 @@ class View(QMainWindow):
         widget_to_remove.setParent(None)
         widget_to_remove.deleteLater()
 
-        self.presenter.update_display()
+        self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
         self.central_layout.update()
         self.update()
 
-    def get_current_mode(self) -> DisplayMode:
-        return DisplayMode(self.mode_dropdown.currentText())
+    def on_mode_changed(self) -> None:
+        mode = DisplayMode(self.mode_dropdown.currentText())
+        self.presenter.change_mode(mode=mode)
+        self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
     def update_display(self, view_data: ViewData) -> None:
         if view_data.frame is None:
@@ -140,12 +142,20 @@ class View(QMainWindow):
             image = QImage(view_data.frame.data, width, height, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(image)
 
-            if view_data.mode == DisplayMode.SCALED:
-                pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
-            elif view_data.mode == DisplayMode.CROPPED:
-                pass
-            else:
-                raise ValueError("Invalid mode")
+            # TODO: Move this to Presenter
+            # if view_data.mode == DisplayMode.SCALED:
+            #     pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
+            # elif view_data.mode == DisplayMode.CROPPED:
+            #     pass
+            # else:
+            #     raise ValueError("Invalid mode")
 
             self.frame_widget.setPixmap(pixmap)
+            self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setFocus()
+
+    def _get_frame_widget_size(self) -> Tuple[int, int]:
+        width = self.frame_widget.size().width()
+        height = self.frame_widget.size().height()
+
+        return width, height
