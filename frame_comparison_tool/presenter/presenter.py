@@ -17,7 +17,6 @@ class Presenter:
         else:
             return False
 
-    # TODO: Check this
     def delete_source(self, file_path: str) -> int:
         return self.model.delete_source(file_path)
 
