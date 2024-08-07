@@ -1,3 +1,4 @@
+from enum import Enum
 from functools import partial
 from pathlib import Path
 from typing import override, List, Optional
@@ -7,6 +8,17 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QH
     QLabel, QFileDialog, QScrollArea
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
+
+
+class DisplayMode(Enum):
+    CROPPED = 'Cropped'
+    SCALED = 'Scaled'
+
+
+class ViewData:
+    def __init__(self, frame: Optional[np.ndarray], mode: DisplayMode):
+        self.frame = frame
+        self.mode = mode
 
 
 class View(QMainWindow):
@@ -117,17 +129,20 @@ class View(QMainWindow):
         self.central_layout.update()
         self.update()
 
-    def update_display(self, frame: Optional[np.ndarray], mode: str) -> None:
-        if frame is None:
+    def get_current_mode(self) -> DisplayMode:
+        return DisplayMode(self.mode_dropdown.currentText())
+
+    def update_display(self, view_data: ViewData) -> None:
+        if view_data.frame is None:
             self.frame_widget.clear()
         else:
-            height, width, channels = frame.shape
-            image = QImage(frame.data, width, height, QImage.Format.Format_RGB888)
+            height, width, channels = view_data.frame.shape
+            image = QImage(view_data.frame.data, width, height, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(image)
 
-            if mode == 'Scaled':
+            if view_data.mode == DisplayMode.SCALED:
                 pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
-            elif mode == 'Cropped':
+            elif view_data.mode == DisplayMode.CROPPED:
                 pass
             else:
                 raise ValueError("Invalid mode")

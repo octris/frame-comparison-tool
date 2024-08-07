@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from frame_comparison_tool.model import Model
-from frame_comparison_tool.view import View
+from frame_comparison_tool.view import View, ViewData, DisplayMode
 
 
 class Presenter:
@@ -31,10 +31,13 @@ class Presenter:
         self.update_display()
 
     def update_display(self) -> None:
-        mode = self.view.mode_dropdown.currentText()
+        mode = self.view.get_current_mode()
+        view_data: ViewData
 
         if len(self.model.sources) == 0:
-            self.view.update_display(None, mode)
+            view_data = ViewData(frame=None, mode=mode)
         else:
             frame = self.model.get_current_frame()
-            self.view.update_display(frame, mode)
+            view_data = ViewData(frame=frame, mode=mode)
+
+        self.view.update_display(view_data)

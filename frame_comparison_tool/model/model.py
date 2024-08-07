@@ -42,7 +42,7 @@ class Model:
     def delete_source(self, file_path: str) -> int:
         src_idx = list(self.sources.keys()).index(file_path)
 
-        if src_idx == self.curr_src_idx and src_idx != 0 or src_idx < self.curr_src_idx:
+        if self.curr_src_idx == len(self.sources) - 1 and self.curr_src_idx > 0:
             self.curr_src_idx -= 1
 
         if len(self.sources) == 0:
