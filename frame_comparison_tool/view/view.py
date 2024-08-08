@@ -17,15 +17,15 @@ class DisplayMode(Enum):
 
 class ViewData:
     def __init__(self, frame: Optional[np.ndarray], mode: DisplayMode):
-        self.frame = frame
-        self.mode = mode
+        self.frame: Optional[np.ndarray] = frame
+        self.mode: DisplayMode = mode
 
 
 class View(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.presenter = None
+        self.presenter: 'Presenter' = None
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -76,10 +76,13 @@ class View(QMainWindow):
     def set_presenter(self, presenter: 'Presenter') -> None:
         self.presenter = presenter
 
+        # TODO: Check this
+        self.presenter.set_max_frame_size(max_frame_size=self._get_max_frame_size())
+
     @override
     def resizeEvent(self, event: QResizeEvent) -> None:
         if self.presenter:
-            self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
+            self.presenter.resize_frame(frame_size=self._get_max_frame_size())
 
         return super().resizeEvent(event)
 
@@ -98,9 +101,8 @@ class View(QMainWindow):
 
     def on_add_source_clicked(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(self)
-        if file_path and self.presenter.add_source(Path(file_path)):
-            self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
+        if file_path and self.presenter.add_source(Path(file_path)):
             main_widget = QWidget()
             widget_layout = QHBoxLayout(main_widget)
             source_label = QLabel(file_path)
@@ -118,13 +120,12 @@ class View(QMainWindow):
             self.update()
 
     def on_delete_clicked(self, file_path: str) -> None:
+        # TODO: Check this
         idx = self.presenter.delete_source(file_path)
-        widget_to_remove = self.added_sources_widgets.pop(idx)
 
+        widget_to_remove = self.added_sources_widgets.pop(idx)
         widget_to_remove.setParent(None)
         widget_to_remove.deleteLater()
-
-        self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
         self.central_layout.update()
         self.update()
@@ -132,30 +133,22 @@ class View(QMainWindow):
     def on_mode_changed(self) -> None:
         mode = DisplayMode(self.mode_dropdown.currentText())
         self.presenter.change_mode(mode=mode)
-        self.presenter.update_display(frame_widget_size=self._get_frame_widget_size())
 
     def update_display(self, view_data: ViewData) -> None:
         if view_data.frame is None:
             self.frame_widget.clear()
         else:
             height, width, channels = view_data.frame.shape
-            image = QImage(view_data.frame.data, width, height, QImage.Format.Format_RGB888)
+            bytes_per_line = 3 * width
+            image = QImage(view_data.frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(image)
-
-            # TODO: Move this to Presenter
-            # if view_data.mode == DisplayMode.SCALED:
-            #     pixmap = pixmap.scaled(self.scroll_area.viewport().size(), Qt.AspectRatioMode.KeepAspectRatio)
-            # elif view_data.mode == DisplayMode.CROPPED:
-            #     pass
-            # else:
-            #     raise ValueError("Invalid mode")
 
             self.frame_widget.setPixmap(pixmap)
             self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setFocus()
 
-    def _get_frame_widget_size(self) -> Tuple[int, int]:
-        width = self.frame_widget.size().width()
-        height = self.frame_widget.size().height()
+    def _get_max_frame_size(self) -> Tuple[int, int]:
+        width = self.scroll_area.size().width()
+        height = self.scroll_area.size().height()
 
         return width, height

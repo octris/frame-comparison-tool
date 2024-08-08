@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from collections import OrderedDict
-from typing import List
+from typing import List, Tuple
 
 from frame_comparison_tool.utils import FrameLoader
 from frame_comparison_tool.view import DisplayMode
@@ -17,6 +17,7 @@ class Model:
         self.curr_frame_idx: int = 0
         self._frame_ids: List[int] = []
         self.curr_mode = DisplayMode.CROPPED
+        self.max_frame_size: Tuple[int, int] = (0, 0)
 
     @property
     def frame_ids(self) -> List[int]:
