@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from collections import OrderedDict
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from frame_comparison_tool.utils import FrameLoader
 from frame_comparison_tool.view import DisplayMode
@@ -17,7 +17,7 @@ class Model:
         self.curr_frame_idx: int = 0
         self._frame_ids: List[int] = []
         self.curr_mode = DisplayMode.CROPPED
-        self.max_frame_size: Tuple[int, int] = (0, 0)
+        self.max_frame_size: Optional[Tuple[int, int]] = None
 
     @property
     def frame_ids(self) -> List[int]:
@@ -31,14 +31,12 @@ class Model:
         for source in self.sources.values():
             source.sample_frames(self._frame_ids)
 
-    def add_source(self, file_path: Path) -> bool:
-        file_path_str = str(file_path.absolute())
-
-        if file_path_str in self.sources:
+    def add_source(self, file_path: str) -> bool:
+        if file_path in self.sources:
             return False
         else:
             frame_loader = FrameLoader(Path(file_path))
-            self.sources[file_path_str] = frame_loader
+            self.sources[file_path] = frame_loader
             self._sample_frame_ids()
             return True
 
@@ -48,10 +46,10 @@ class Model:
         if self.curr_src_idx == len(self.sources) - 1 and self.curr_src_idx > 0:
             self.curr_src_idx -= 1
 
+        del self.sources[file_path]
+
         if len(self.sources) == 0:
             self.curr_frame_idx = 0
-
-        del self.sources[file_path]
 
         return src_idx
 

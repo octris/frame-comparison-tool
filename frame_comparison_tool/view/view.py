@@ -1,13 +1,11 @@
 from enum import Enum
-from functools import partial
-from pathlib import Path
 from typing import override, List, Optional, Tuple
 
 import numpy as np
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QScrollArea
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
+from PySide6.QtCore import Qt, Signal, Slot
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QShowEvent
 
 
 class DisplayMode(Enum):
@@ -22,10 +20,17 @@ class ViewData:
 
 
 class View(QMainWindow):
+    add_source_requested = Signal(str)
+    delete_source_requested = Signal(str)
+    mode_changed = Signal(DisplayMode)
+    frame_changed = Signal(int)
+    source_changed = Signal(int)
+    resize_requested = Signal(tuple)
+
     def __init__(self):
         super().__init__()
-
-        self.presenter: 'Presenter' = None
+        self.presenter: Optional['Presenter'] = None
+        self._initial_frame_size: Optional[Tuple[int, int]] = None
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -56,14 +61,13 @@ class View(QMainWindow):
         self.config_layout = QHBoxLayout(self.config_widget)
 
         self.add_source_button = QPushButton('Add Source', self.config_widget)
-        self.add_source_button.clicked.connect(self.on_add_source_clicked)
+        self.add_source_button.clicked.connect(self._on_add_source_clicked)
         self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.add_source_button)
 
         self.mode_dropdown = QComboBox(self.config_widget)
-        self.mode_dropdown.addItems(['Cropped', 'Scaled'])
-        self.mode_dropdown.currentTextChanged.connect(
-            lambda: self.on_mode_changed() if self.presenter is not None else None)
+        self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
+        self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.mode_dropdown)
 
@@ -73,56 +77,60 @@ class View(QMainWindow):
         self.setFocus()
         self.show()
 
+    @override
+    def showEvent(self, event: QShowEvent):
+        if self._initial_frame_size is None:
+            self._initial_frame_size = self._get_max_frame_size()
+
+        return super().showEvent(event)
+
+    def get_initial_frame_size(self) -> Optional[Tuple[int, int]]:
+        return self._initial_frame_size
+
     def set_presenter(self, presenter: 'Presenter') -> None:
         self.presenter = presenter
 
-        # TODO: Check this
-        self.presenter.set_max_frame_size(max_frame_size=self._get_max_frame_size())
-
     @override
-    def resizeEvent(self, event: QResizeEvent) -> None:
-        if self.presenter:
-            self.presenter.resize_frame(frame_size=self._get_max_frame_size())
-
+    def resizeEvent(self, event: QResizeEvent):
+        self.resize_requested.emit(self._get_max_frame_size())
         return super().resizeEvent(event)
 
     @override
-    def keyPressEvent(self, event: QKeyEvent) -> None:
+    def keyPressEvent(self, event: QKeyEvent):
         if event.key() == Qt.Key.Key_Left:
-            self.presenter.change_frame(-1)
+            self.frame_changed.emit(-1)
         elif event.key() == Qt.Key.Key_Right:
-            self.presenter.change_frame(1)
+            self.frame_changed.emit(1)
         elif event.key() == Qt.Key.Key_Down:
-            self.presenter.change_source(-1)
+            self.source_changed.emit(-1)
         elif event.key() == Qt.Key.Key_Up:
-            self.presenter.change_source(1)
+            self.source_changed.emit(1)
 
         return super().keyPressEvent(event)
 
-    def on_add_source_clicked(self) -> None:
+    def _on_add_source_clicked(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(self)
+        if file_path:
+            self.add_source_requested.emit(file_path)
 
-        if file_path and self.presenter.add_source(Path(file_path)):
-            main_widget = QWidget()
-            widget_layout = QHBoxLayout(main_widget)
-            source_label = QLabel(file_path)
-            delete_button = QPushButton('Delete')
-            delete_button.clicked.connect(partial(self.on_delete_clicked, file_path))
+    def on_add_source(self, file_path: str) -> None:
+        main_widget = QWidget()
+        widget_layout = QHBoxLayout(main_widget)
+        source_label = QLabel(file_path)
+        delete_button = QPushButton('Delete')
+        delete_button.clicked.connect(lambda: self._on_delete_clicked(file_path))
 
-            main_widget.setLayout(widget_layout)
-            widget_layout.addWidget(source_label)
-            widget_layout.addWidget(delete_button)
+        main_widget.setLayout(widget_layout)
+        widget_layout.addWidget(source_label)
+        widget_layout.addWidget(delete_button)
 
-            self.central_layout.addWidget(main_widget)
-            self.added_sources_widgets.append(main_widget)
+        self.central_layout.addWidget(main_widget)
+        self.added_sources_widgets.append(main_widget)
 
-            self.central_layout.update()
-            self.update()
+        self.central_layout.update()
+        self.update()
 
-    def on_delete_clicked(self, file_path: str) -> None:
-        # TODO: Check this
-        idx = self.presenter.delete_source(file_path)
-
+    def on_delete_source(self, idx) -> None:
         widget_to_remove = self.added_sources_widgets.pop(idx)
         widget_to_remove.setParent(None)
         widget_to_remove.deleteLater()
@@ -130,9 +138,12 @@ class View(QMainWindow):
         self.central_layout.update()
         self.update()
 
-    def on_mode_changed(self) -> None:
+    def _on_delete_clicked(self, file_path: str) -> None:
+        self.delete_source_requested.emit(file_path)
+
+    def _on_mode_changed(self) -> None:
         mode = DisplayMode(self.mode_dropdown.currentText())
-        self.presenter.change_mode(mode=mode)
+        self.mode_changed.emit(mode)
 
     def update_display(self, view_data: ViewData) -> None:
         if view_data.frame is None:
