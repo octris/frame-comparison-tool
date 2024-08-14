@@ -4,8 +4,8 @@ from typing import override, List, Optional, Tuple
 import numpy as np
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QScrollArea
-from PySide6.QtCore import Qt, Signal, Slot
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QShowEvent
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
 
 
 class DisplayMode(Enum):
