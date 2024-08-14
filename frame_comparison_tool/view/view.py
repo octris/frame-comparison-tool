@@ -30,7 +30,6 @@ class View(QMainWindow):
     def __init__(self):
         super().__init__()
         self.presenter: Optional['Presenter'] = None
-        self._initial_frame_size: Optional[Tuple[int, int]] = None
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -77,22 +76,12 @@ class View(QMainWindow):
         self.setFocus()
         self.show()
 
-    @override
-    def showEvent(self, event: QShowEvent):
-        if self._initial_frame_size is None:
-            self._initial_frame_size = self._get_max_frame_size()
-
-        return super().showEvent(event)
-
-    def get_initial_frame_size(self) -> Optional[Tuple[int, int]]:
-        return self._initial_frame_size
-
     def set_presenter(self, presenter: 'Presenter') -> None:
         self.presenter = presenter
 
     @override
     def resizeEvent(self, event: QResizeEvent):
-        self.resize_requested.emit(self._get_max_frame_size())
+        self.resize_requested.emit(self.get_max_frame_size())
         return super().resizeEvent(event)
 
     @override
@@ -158,7 +147,7 @@ class View(QMainWindow):
             self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setFocus()
 
-    def _get_max_frame_size(self) -> Tuple[int, int]:
+    def get_max_frame_size(self) -> Tuple[int, int]:
         width = self.scroll_area.size().width()
         height = self.scroll_area.size().height()
 

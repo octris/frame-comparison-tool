@@ -16,9 +16,8 @@ class Presenter:
         self._set_initial_frame_size()
 
     def _set_initial_frame_size(self) -> None:
-        initial_frame_size = self.view.get_initial_frame_size()
-        if initial_frame_size is not None:
-            self.set_max_frame_size(max_frame_size=initial_frame_size)
+        initial_frame_size = self.view.get_max_frame_size()
+        self.set_max_frame_size(max_frame_size=initial_frame_size)
 
     def _connect_signals(self) -> None:
         self.view.add_source_requested.connect(self.add_source)
