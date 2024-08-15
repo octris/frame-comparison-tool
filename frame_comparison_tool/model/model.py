@@ -5,7 +5,7 @@ import numpy as np
 from collections import OrderedDict
 from typing import List, Tuple, Optional
 
-from frame_comparison_tool.utils import FrameLoader
+from frame_comparison_tool.utils import FrameLoader, FrameType
 from frame_comparison_tool.view import DisplayMode
 
 
@@ -18,18 +18,28 @@ class Model:
         self._frame_ids: List[int] = []
         self.curr_mode = DisplayMode.CROPPED
         self.max_frame_size: Optional[Tuple[int, int]] = None
+        self.curr_frame_type: FrameType = FrameType.B_TYPE
 
     @property
     def frame_ids(self) -> List[int]:
         return self._frame_ids
 
-    def _sample_frame_ids(self) -> None:
+    def _delete_sampled_frames(self) -> None:
+        for source in self.sources.values():
+            source.delete_frames()
+
+    def _sample_frames(self) -> None:
         random.seed(42)
         min_total_frames = min([source.total_frames for source in self.sources.values()])
         self._frame_ids = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
 
         for source in self.sources.values():
-            source.sample_frames(self._frame_ids)
+            source.sample_frames(self._frame_ids, self.curr_frame_type)
+
+    def resample_frames(self) -> None:
+        if len(self.sources) > 0:
+            self._delete_sampled_frames()
+            self._sample_frames()
 
     def add_source(self, file_path: str) -> bool:
         if file_path in self.sources:
@@ -37,7 +47,7 @@ class Model:
         else:
             frame_loader = FrameLoader(Path(file_path))
             self.sources[file_path] = frame_loader
-            self._sample_frame_ids()
+            self._sample_frames()
             return True
 
     def delete_source(self, file_path: str) -> int:

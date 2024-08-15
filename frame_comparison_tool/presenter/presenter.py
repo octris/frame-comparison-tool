@@ -4,6 +4,7 @@ import numpy as np
 
 from frame_comparison_tool.model import Model
 from frame_comparison_tool.view import View, ViewData, DisplayMode
+from frame_comparison_tool.utils import FrameType
 from PIL import Image
 
 
@@ -26,6 +27,7 @@ class Presenter:
         self.view.frame_changed.connect(self.change_frame)
         self.view.source_changed.connect(self.change_source)
         self.view.resize_requested.connect(self.resize_frame)
+        self.view.frame_type_changed.connect(self.change_frame_type)
 
     def add_source(self, file_path: str) -> None:
         if self.model.add_source(file_path):
@@ -36,6 +38,12 @@ class Presenter:
         idx = self.model.delete_source(file_path)
         self.view.on_delete_source(idx)
         self.update_display()
+
+    def change_frame_type(self, frame_type: FrameType) -> None:
+        if self.model.curr_frame_type != frame_type:
+            self.model.curr_frame_type = frame_type
+            self.model.resample_frames()
+            self.update_display()
 
     def change_frame(self, direction: int) -> None:
         self.model.curr_frame_idx += direction

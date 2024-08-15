@@ -11,7 +11,7 @@ class Align(Enum):
 
 
 _FONT_FACE = 2
-_FONT_SCALE = 1.0
+_FONT_SCALE = 0.85
 _COLOR = (255, 255, 255)
 _THICKNESS = 3
 _BORDER_COLOR = (0, 0, 0)

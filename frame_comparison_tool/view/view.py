@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QH
     QLabel, QFileDialog, QScrollArea
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
+from frame_comparison_tool.utils import FrameType
 
 
 class DisplayMode(Enum):
@@ -26,6 +27,7 @@ class View(QMainWindow):
     frame_changed = Signal(int)
     source_changed = Signal(int)
     resize_requested = Signal(tuple)
+    frame_type_changed = Signal(FrameType)
 
     def __init__(self):
         super().__init__()
@@ -35,6 +37,7 @@ class View(QMainWindow):
     def _init_ui(self) -> None:
         self.setGeometry(100, 100, 1000, 800)
         self.setWindowTitle(f'Frame Comparison Tool')
+        self.setMinimumSize(1, 1)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -69,6 +72,18 @@ class View(QMainWindow):
         self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.mode_dropdown)
+
+        self.frame_type_dropdown = QComboBox(self.config_widget)
+        # noinspection PyTypeChecker
+        self.frame_type_dropdown.addItems([
+            frame_type.value
+            for frame_type
+            in FrameType
+            if frame_type != FrameType.UNKNOWN
+        ])
+        self.frame_type_dropdown.currentTextChanged.connect(self._on_frame_type_changed)
+        self.frame_type_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.config_layout.addWidget(self.frame_type_dropdown)
 
         self.added_sources_widgets: List[QWidget] = []
 
@@ -133,6 +148,10 @@ class View(QMainWindow):
     def _on_mode_changed(self) -> None:
         mode = DisplayMode(self.mode_dropdown.currentText())
         self.mode_changed.emit(mode)
+
+    def _on_frame_type_changed(self) -> None:
+        frame_type = FrameType(self.frame_type_dropdown.currentText())
+        self.frame_type_changed.emit(frame_type)
 
     def update_display(self, view_data: ViewData) -> None:
         if view_data.frame is None:
