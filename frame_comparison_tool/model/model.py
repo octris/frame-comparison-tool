@@ -15,14 +15,14 @@ class Model:
         self.n_samples: int = n_samples
         self.curr_src_idx: int = 0
         self.curr_frame_idx: int = 0
-        self._frame_ids: List[int] = []
+        self.frame_positions: List[int] = []
         self.curr_mode = DisplayMode.CROPPED
         self.max_frame_size: Optional[Tuple[int, int]] = None
         self.curr_frame_type: FrameType = FrameType.B_TYPE
 
-    @property
-    def frame_ids(self) -> List[int]:
-        return self._frame_ids
+    def offset(self, direction: int) -> int:
+        frame_position = self.frame_positions[self.curr_frame_idx]
+        return self.get_current_source().offset(frame_position, direction, self.curr_frame_type)
 
     def _delete_sampled_frames(self) -> None:
         for source in self.sources.values():

@@ -63,6 +63,7 @@ class View(QMainWindow):
     source_changed = Signal(int)
     resize_requested = Signal(tuple)
     frame_type_changed = Signal(FrameType)
+    offset_changed = Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -144,6 +145,10 @@ class View(QMainWindow):
             self.source_changed.emit(-1)
         elif event.key() == Qt.Key.Key_Up:
             self.source_changed.emit(1)
+        elif event.key() == Qt.Key.Key_Plus:
+            self.offset_changed.emit(1)
+        elif event.key() == Qt.Key.Key_Minus:
+            self.offset_changed.emit(-1)
 
         return super().keyPressEvent(event)
 

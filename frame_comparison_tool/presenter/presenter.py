@@ -28,6 +28,7 @@ class Presenter:
         self.view.source_changed.connect(self.change_source)
         self.view.resize_requested.connect(self.resize_frame)
         self.view.frame_type_changed.connect(self.change_frame_type)
+        self.view.offset_changed.connect(self.change_offset)
 
     def add_source(self, file_path: str) -> None:
         if self.model.add_source(file_path):
@@ -39,6 +40,11 @@ class Presenter:
         self.view.on_delete_source(idx)
         self.update_display()
 
+    def change_offset(self, direction: int) -> None:
+        idx = self.model.offset(direction)
+        self.model.get_current_source().frames[self.model.curr_frame_idx] = idx
+        self.update_display()
+
     def change_frame_type(self, frame_type: FrameType) -> None:
         if self.model.curr_frame_type != frame_type:
             self.model.curr_frame_type = frame_type
@@ -47,7 +53,7 @@ class Presenter:
 
     def change_frame(self, direction: int) -> None:
         self.model.curr_frame_idx += direction
-        self.model.curr_frame_idx = max(0, min(self.model.curr_frame_idx, len(self.model.frame_ids) - 1))
+        self.model.curr_frame_idx = max(0, min(self.model.curr_frame_idx, len(self.model.frame_positions) - 1))
         self.update_display()
 
     def change_source(self, direction: int) -> None:

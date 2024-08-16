@@ -14,7 +14,7 @@ class FrameLoader:
     def __init__(self, file_path: Path):
         self._file_path: Path = file_path
         self._video_capture: cv2.VideoCapture = cv2.VideoCapture(str(self._file_path.absolute()))
-        self._frames: List[np.ndarray] = []
+        self.frames: List[np.ndarray] = []
         self._total_frames = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
     @property
@@ -25,13 +25,9 @@ class FrameLoader:
     def total_frames(self) -> int:
         return int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    @property
-    def frames(self) -> List[np.ndarray]:
-        return self._frames
-
     def delete_frames(self) -> None:
-        if len(self._frames) > 0:
-            self._frames.clear()
+        if len(self.frames) > 0:
+            self.frames.clear()
 
     def _get_frame(self) -> Optional[cv2.typing.MatLike]:
         if self._video_capture.isOpened():
@@ -76,11 +72,15 @@ class FrameLoader:
 
         raise NoMatchingFrameTypeError(f'No {frame_type.value} frame found.')
 
+    # TODO
+    def offset(self, frame_position: int, direction: int, frame_type: FrameType) -> int:
+        pass
+
     def sample_frames(self, frame_ids: List[int], frame_type: FrameType) -> None:
-        if len(self._frames) > 0:
-            self._frames.clear()
+        if len(self.frames) > 0:
+            self.frames.clear()
 
         for idx in frame_ids:
             idx, image = self._find_closest_frame(idx, frame_type)
             frame = self._get_composited_image(idx, image, frame_type)
-            self._frames.append((cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+            self.frames.append((cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
