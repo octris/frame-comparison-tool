@@ -4,8 +4,8 @@ from typing import override, List, Optional, Tuple
 import numpy as np
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QScrollArea
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
+from PySide6.QtCore import Qt, Signal, QPoint
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from frame_comparison_tool.utils import FrameType
 
 
@@ -18,6 +18,41 @@ class ViewData:
     def __init__(self, frame: Optional[np.ndarray], mode: DisplayMode):
         self.frame: Optional[np.ndarray] = frame
         self.mode: DisplayMode = mode
+
+
+class PannableScrollArea(QScrollArea):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.panning = False
+        self.last_pan_point = QPoint()
+
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            self.last_pan_point = event.pos()
+            self.panning = True
+
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if self.panning:
+            delta = event.pos() - self.last_pan_point
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - delta.x()
+            )
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - delta.y()
+            )
+            self.last_pan_point = event.pos()
+
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.panning = False
+
+        super().mouseReleaseEvent(event)
 
 
 class View(QMainWindow):
@@ -49,7 +84,7 @@ class View(QMainWindow):
         self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.setMinimumSize(1, 1)
 
-        self.scroll_area = QScrollArea()
+        self.scroll_area = PannableScrollArea()
         self.scroll_area.setWidget(self.frame_widget)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
@@ -62,17 +97,6 @@ class View(QMainWindow):
 
         self.config_layout = QHBoxLayout(self.config_widget)
 
-        self.add_source_button = QPushButton('Add Source', self.config_widget)
-        self.add_source_button.clicked.connect(self._on_add_source_clicked)
-        self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.config_layout.addWidget(self.add_source_button)
-
-        self.mode_dropdown = QComboBox(self.config_widget)
-        self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
-        self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
-        self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.config_layout.addWidget(self.mode_dropdown)
-
         self.frame_type_dropdown = QComboBox(self.config_widget)
         # noinspection PyTypeChecker
         self.frame_type_dropdown.addItems([
@@ -84,6 +108,17 @@ class View(QMainWindow):
         self.frame_type_dropdown.currentTextChanged.connect(self._on_frame_type_changed)
         self.frame_type_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.config_layout.addWidget(self.frame_type_dropdown)
+
+        self.mode_dropdown = QComboBox(self.config_widget)
+        self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
+        self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
+        self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.config_layout.addWidget(self.mode_dropdown)
+
+        self.add_source_button = QPushButton('Add Source', self.config_widget)
+        self.add_source_button.clicked.connect(self._on_add_source_clicked)
+        self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.config_layout.addWidget(self.add_source_button)
 
         self.added_sources_widgets: List[QWidget] = []
 
