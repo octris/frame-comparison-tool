@@ -73,8 +73,20 @@ class FrameLoader:
         raise NoMatchingFrameTypeError(f'No {frame_type.value} frame found.')
 
     # TODO
-    def offset(self, frame_position: int, direction: int, frame_type: FrameType) -> int:
-        pass
+    def offset(self, frame_position: int, direction: int, frame_type: FrameType) -> Tuple[int, Optional[np.ndarray]]:
+        frame_position += direction
+        frame: Optional[np.ndarray] = None
+
+        if direction > 0:
+            frame_position, image = self._find_closest_frame(frame_position, frame_type)
+            frame = self._get_composited_image(frame_position, image, frame_type)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        elif direction < 0:
+            pass
+        else:
+            raise ValueError(f'Invalid offset value.')
+
+        return frame_position, frame
 
     def sample_frames(self, frame_ids: List[int], frame_type: FrameType) -> None:
         if len(self.frames) > 0:

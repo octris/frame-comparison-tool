@@ -20,9 +20,12 @@ class Model:
         self.max_frame_size: Optional[Tuple[int, int]] = None
         self.curr_frame_type: FrameType = FrameType.B_TYPE
 
-    def offset(self, direction: int) -> int:
-        frame_position = self.frame_positions[self.curr_frame_idx]
-        return self.get_current_source().offset(frame_position, direction, self.curr_frame_type)
+    def offset(self, direction: int) -> None:
+        frame_position, frame = self.get_current_source().offset(self.frame_positions[self.curr_frame_idx],
+                                                                 direction,
+                                                                 self.curr_frame_type)
+        self.frame_positions[self.curr_frame_idx] = frame_position
+        self.get_current_source().frames[self.curr_frame_idx] = frame
 
     def _delete_sampled_frames(self) -> None:
         for source in self.sources.values():
@@ -31,10 +34,10 @@ class Model:
     def _sample_frames(self) -> None:
         random.seed(42)
         min_total_frames = min([source.total_frames for source in self.sources.values()])
-        self._frame_ids = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
+        self.frame_positions = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
 
         for source in self.sources.values():
-            source.sample_frames(self._frame_ids, self.curr_frame_type)
+            source.sample_frames(self.frame_positions, self.curr_frame_type)
 
     def resample_frames(self) -> None:
         if len(self.sources) > 0:
