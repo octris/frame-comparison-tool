@@ -6,7 +6,7 @@ from collections import OrderedDict
 from typing import List, Tuple, Optional
 
 from frame_comparison_tool.utils import FrameLoader, FrameType
-from frame_comparison_tool.view import DisplayMode
+from frame_comparison_tool.utils import DisplayMode
 
 
 class Model:

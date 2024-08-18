@@ -1,14 +1,8 @@
 from typing import Tuple
-from enum import Enum
-
 import cv2
 
-
-class Align(Enum):
-    LEFT = 0
-    CENTER = 1
-    RIGHT = 2
-
+from frame_comparison_tool.utils.align import Align
+from frame_comparison_tool.utils.exceptions import InvalidAlignmentError
 
 _FONT_FACE = 2
 _FONT_SCALE = 0.85
@@ -56,7 +50,7 @@ def put_bordered_text(img: cv2.typing.MatLike,
         elif align == Align.RIGHT:
             x_offset -= text_width
         else:
-            raise ValueError(f'Invalid align value supplied: {align}')
+            raise InvalidAlignmentError(align)
 
         img = cv2.putText(img=img, text=line, org=(x_offset, y_offset), fontFace=font_face, fontScale=font_scale,
                           color=border_color, thickness=thickness)

@@ -1,58 +1,11 @@
-from enum import Enum
 from typing import override, List, Optional, Tuple
 
-import numpy as np
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
-    QLabel, QFileDialog, QScrollArea
-from PySide6.QtCore import Qt, Signal, QPoint
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
-from frame_comparison_tool.utils import FrameType
-
-
-class DisplayMode(Enum):
-    CROPPED = 'Cropped'
-    SCALED = 'Scaled'
-
-
-class ViewData:
-    def __init__(self, frame: Optional[np.ndarray], mode: DisplayMode):
-        self.frame: Optional[np.ndarray] = frame
-        self.mode: DisplayMode = mode
-
-
-class PannableScrollArea(QScrollArea):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.panning = False
-        self.last_pan_point = QPoint()
-
-    def mousePressEvent(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.setCursor(Qt.CursorShape.ClosedHandCursor)
-            self.last_pan_point = event.pos()
-            self.panning = True
-
-        super().mousePressEvent(event)
-
-    def mouseMoveEvent(self, event: QMouseEvent):
-        if self.panning:
-            delta = event.pos() - self.last_pan_point
-            self.horizontalScrollBar().setValue(
-                self.horizontalScrollBar().value() - delta.x()
-            )
-            self.verticalScrollBar().setValue(
-                self.verticalScrollBar().value() - delta.y()
-            )
-            self.last_pan_point = event.pos()
-
-        super().mouseMoveEvent(event)
-
-    def mouseReleaseEvent(self, event: QMouseEvent):
-        if event.button() == Qt.MouseButton.LeftButton:
-            self.setCursor(Qt.CursorShape.ArrowCursor)
-            self.panning = False
-
-        super().mouseReleaseEvent(event)
+    QLabel, QFileDialog
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
+from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData
+from .pannable_scroll_area import PannableScrollArea
 
 
 class View(QMainWindow):
@@ -73,7 +26,6 @@ class View(QMainWindow):
     def _init_ui(self) -> None:
         self.setGeometry(100, 100, 1000, 800)
         self.setWindowTitle(f'Frame Comparison Tool')
-        self.setMinimumSize(1, 1)
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -83,7 +35,7 @@ class View(QMainWindow):
         self.frame_widget.setStyleSheet('background-color: white')
         self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.setMinimumSize(1, 1)
+        self.frame_widget.setMinimumSize(1, 1)
 
         self.scroll_area = PannableScrollArea()
         self.scroll_area.setWidget(self.frame_widget)
@@ -125,7 +77,6 @@ class View(QMainWindow):
 
         self.setLayout(self.central_layout)
         self.setFocus()
-        self.show()
 
     def set_presenter(self, presenter: 'Presenter') -> None:
         self.presenter = presenter

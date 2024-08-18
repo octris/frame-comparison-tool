@@ -3,7 +3,9 @@ from typing import Tuple
 import numpy as np
 
 from frame_comparison_tool.model import Model
-from frame_comparison_tool.view import View, ViewData, DisplayMode
+from frame_comparison_tool.utils.exceptions import ZeroDimensionError
+from frame_comparison_tool.view import View
+from frame_comparison_tool.utils import DisplayMode, ViewData
 from frame_comparison_tool.utils import FrameType
 from PIL import Image
 
@@ -14,11 +16,6 @@ class Presenter:
         self.view: View = view
         self.view.set_presenter(self)
         self._connect_signals()
-        self._set_initial_frame_size()
-
-    def _set_initial_frame_size(self) -> None:
-        initial_frame_size = self.view.get_max_frame_size()
-        self.set_max_frame_size(max_frame_size=initial_frame_size)
 
     def _connect_signals(self) -> None:
         self.view.add_source_requested.connect(self.add_source)
@@ -93,7 +90,7 @@ class Presenter:
         max_frame_size: Tuple[int, int] = self.model.max_frame_size
 
         if max_frame_size[0] == 0 or max_frame_size[1] == 0:
-            raise ValueError("Width or height cannot be zero.")
+            raise ZeroDimensionError()
 
         image = Image.fromarray(frame)
         image.thumbnail(max_frame_size)

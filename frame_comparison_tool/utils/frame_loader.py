@@ -1,13 +1,10 @@
 import cv2
 import numpy as np
 from pathlib import Path
-from typing import List, Optional, Dict, Tuple
+from typing import List, Optional, Tuple
 from frame_comparison_tool.utils import put_bordered_text, Align, FrameType
-
-
-class NoMatchingFrameTypeError(Exception):
-    """Raised when no matching frame type is found."""
-    pass
+from frame_comparison_tool.utils.exceptions import NoMatchingFrameTypeError, ImageReadError, VideoCaptureFailed, \
+    FrameIndexError, InvalidOffsetError
 
 
 class FrameLoader:
@@ -35,15 +32,15 @@ class FrameLoader:
             if success:
                 return image
             else:
-                raise RuntimeError(f'Could not read image.')
+                raise ImageReadError()
         else:
-            raise RuntimeError(f'Video capture not opened.')
+            raise VideoCaptureFailed()
 
     def _set_frame_idx(self, frame_idx: int) -> None:
         if self._video_capture.isOpened():
             self._video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
         else:
-            raise RuntimeError(f'Could not set frame index.')
+            raise FrameIndexError(frame_idx)
 
     def _get_frame_type(self) -> FrameType:
         frame_type = int(self._video_capture.get(cv2.CAP_PROP_FRAME_TYPE))
@@ -70,7 +67,7 @@ class FrameLoader:
             else:
                 frame_idx += 1
 
-        raise NoMatchingFrameTypeError(f'No {frame_type.value} frame found.')
+        raise NoMatchingFrameTypeError(frame_type.value)
 
     # TODO
     def offset(self, frame_position: int, direction: int, frame_type: FrameType) -> Tuple[int, Optional[np.ndarray]]:
@@ -84,7 +81,7 @@ class FrameLoader:
         elif direction < 0:
             pass
         else:
-            raise ValueError(f'Invalid offset value.')
+            raise InvalidOffsetError(direction)
 
         return frame_position, frame
 
