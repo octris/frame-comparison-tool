@@ -19,6 +19,7 @@ class Model:
         self.curr_mode = DisplayMode.CROPPED
         self.max_frame_size: Optional[Tuple[int, int]] = None
         self.curr_frame_type: FrameType = FrameType.B_TYPE
+        self.seed: int = 0
 
     def offset(self, direction: int) -> None:
         frame_position, frame = self.get_current_source().offset(self.frame_positions[self.curr_frame_idx],
@@ -32,7 +33,7 @@ class Model:
             source.delete_frames()
 
     def _sample_frames(self) -> None:
-        random.seed(42)
+        random.seed(self.seed)
         min_total_frames = min([source.total_frames for source in self.sources.values()])
         self.frame_positions = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
 

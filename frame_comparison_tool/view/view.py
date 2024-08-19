@@ -1,7 +1,7 @@
 from typing import override, List, Optional, Tuple
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
-    QLabel, QFileDialog
+    QLabel, QFileDialog, QSpinBox
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData
@@ -17,6 +17,7 @@ class View(QMainWindow):
     resize_requested = Signal(tuple)
     frame_type_changed = Signal(FrameType)
     offset_changed = Signal(int)
+    seed_changed = Signal(int)
 
     def __init__(self):
         super().__init__()
@@ -49,6 +50,12 @@ class View(QMainWindow):
         self.central_layout.addWidget(self.config_widget, stretch=1)
 
         self.config_layout = QHBoxLayout(self.config_widget)
+
+        self.spin_box = QSpinBox()
+        self.spin_box.setRange(0, 10000)
+        self.spin_box.setValue(0)
+        self.spin_box.valueChanged.connect(self._on_seed_changed)
+        self.config_layout.addWidget(self.spin_box)
 
         self.frame_type_dropdown = QComboBox(self.config_widget)
         # noinspection PyTypeChecker
@@ -103,6 +110,11 @@ class View(QMainWindow):
 
         return super().keyPressEvent(event)
 
+    @override
+    def mousePressEvent(self, event):
+        self.setFocus()
+        super().mousePressEvent(event)
+
     def _on_add_source_clicked(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(self)
         if file_path:
@@ -132,6 +144,9 @@ class View(QMainWindow):
 
         self.central_layout.update()
         self.update()
+
+    def _on_seed_changed(self) -> None:
+        self.seed_changed.emit(self.spin_box.value())
 
     def _on_delete_clicked(self, file_path: str) -> None:
         self.delete_source_requested.emit(file_path)

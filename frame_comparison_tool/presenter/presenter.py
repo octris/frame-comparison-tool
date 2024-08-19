@@ -26,6 +26,7 @@ class Presenter:
         self.view.resize_requested.connect(self.resize_frame)
         self.view.frame_type_changed.connect(self.change_frame_type)
         self.view.offset_changed.connect(self.offset_frame_position)
+        self.view.seed_changed.connect(self.change_seed)
 
     def add_source(self, file_path: str) -> None:
         if self.model.add_source(file_path):
@@ -35,6 +36,11 @@ class Presenter:
     def delete_source(self, file_path: str) -> None:
         idx = self.model.delete_source(file_path)
         self.view.on_delete_source(idx)
+        self.update_display()
+
+    def change_seed(self, seed: int):
+        self.model.seed = seed
+        self.model.resample_frames()
         self.update_display()
 
     def offset_frame_position(self, direction: int) -> None:
