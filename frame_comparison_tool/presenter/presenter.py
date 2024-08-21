@@ -27,6 +27,7 @@ class Presenter:
         self.view.frame_type_changed.connect(self.change_frame_type)
         self.view.offset_changed.connect(self.offset_frame_position)
         self.view.seed_changed.connect(self.change_seed)
+        self.view.shown.connect(self.set_max_frame_size)
 
     def add_source(self, file_path: str) -> None:
         if self.model.add_source(file_path):

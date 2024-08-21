@@ -18,6 +18,8 @@ class View(QMainWindow):
     frame_type_changed = Signal(FrameType)
     offset_changed = Signal(int)
     seed_changed = Signal(int)
+    shown = Signal(tuple)
+
 
     def __init__(self):
         super().__init__()
@@ -87,6 +89,11 @@ class View(QMainWindow):
 
     def set_presenter(self, presenter: 'Presenter') -> None:
         self.presenter = presenter
+
+    @override
+    def show(self) -> None:
+        super().show()
+        self.shown.emit(self.get_max_frame_size())
 
     @override
     def resizeEvent(self, event: QResizeEvent):
