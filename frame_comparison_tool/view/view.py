@@ -9,6 +9,10 @@ from .pannable_scroll_area import PannableScrollArea
 
 
 class View(QMainWindow):
+    """
+    This class creates the GUI for user interactions and communicates with the ``Presenter`` through signals.
+    """
+
     add_source_requested = Signal(str)
     delete_source_requested = Signal(str)
     mode_changed = Signal(DisplayMode)
@@ -20,13 +24,20 @@ class View(QMainWindow):
     seed_changed = Signal(int)
     shown = Signal(tuple)
 
-
     def __init__(self):
+        """
+        Initializes a ``View`` instance.
+        """
         super().__init__()
         self.presenter: Optional['Presenter'] = None
+        """``Presenter`` instance."""
         self._init_ui()
 
     def _init_ui(self) -> None:
+        """
+        Initializes the user interface.
+        """
+
         self.setGeometry(100, 100, 1000, 800)
         self.setWindowTitle(f'Frame Comparison Tool')
 
@@ -88,20 +99,43 @@ class View(QMainWindow):
         self.setFocus()
 
     def set_presenter(self, presenter: 'Presenter') -> None:
+        """
+        Set the ``Presenter`` object.
+
+        :param presenter: ``Presenter`` instance.
+        """
         self.presenter = presenter
 
     @override
     def show(self) -> None:
+        """
+        Shows the main window and emits a signal.
+        """
         super().show()
         self.shown.emit(self.get_max_frame_size())
 
     @override
-    def resizeEvent(self, event: QResizeEvent):
+    def resizeEvent(self, event: QResizeEvent) -> None:
+        """
+        Handles window resize events.
+
+        :param event: Resize event object.
+        """
         self.resize_requested.emit(self.get_max_frame_size())
         return super().resizeEvent(event)
 
     @override
-    def keyPressEvent(self, event: QKeyEvent):
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """
+        Handles key press events.
+
+        Emits various signals based on the key pressed:
+        - Left/Right arrows: Change frame
+        - Up/Down arrows: Change source
+        - Plus/Minus: Offset frame
+
+        :param event: Key event object.
+        """
         if event.key() == Qt.Key.Key_Left:
             self.frame_changed.emit(-1)
         elif event.key() == Qt.Key.Key_Right:
@@ -118,16 +152,29 @@ class View(QMainWindow):
         return super().keyPressEvent(event)
 
     @override
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event) -> None:
+        """
+        Handles mouse press events.
+
+        :param event: Mouse press event object.
+        """
         self.setFocus()
         super().mousePressEvent(event)
 
     def _on_add_source_clicked(self) -> None:
+        """
+        Emits a signal when the user adds a new video source.
+        """
         file_path, _ = QFileDialog.getOpenFileName(self)
         if file_path:
             self.add_source_requested.emit(file_path)
 
     def on_add_source(self, file_path: str) -> None:
+        """
+        Adds new source to the UI.
+
+        :param file_path: String path to the video source.
+        """
         main_widget = QWidget()
         widget_layout = QHBoxLayout(main_widget)
         source_label = QLabel(file_path)
@@ -145,6 +192,11 @@ class View(QMainWindow):
         self.update()
 
     def on_delete_source(self, idx) -> None:
+        """
+        Deletes source from the UI.
+
+        :param idx: Index of the deleted source.
+        """
         widget_to_remove = self.added_sources_widgets.pop(idx)
         widget_to_remove.setParent(None)
         widget_to_remove.deleteLater()
@@ -153,20 +205,39 @@ class View(QMainWindow):
         self.update()
 
     def _on_seed_changed(self) -> None:
+        """
+        Emits a signal when the user changes the random seed.
+        """
         self.seed_changed.emit(self.spin_box.value())
 
     def _on_delete_clicked(self, file_path: str) -> None:
+        """
+        Emits a signal when the user deletes a source.
+
+        :param file_path: String path to the video source.
+        """
         self.delete_source_requested.emit(file_path)
 
     def _on_mode_changed(self) -> None:
+        """
+        Emits a signal when the user changes the display mode.
+        """
         mode = DisplayMode(self.mode_dropdown.currentText())
         self.mode_changed.emit(mode)
 
     def _on_frame_type_changed(self) -> None:
+        """
+        Emits a signal when the user changes the frame type.
+        """
         frame_type = FrameType(self.frame_type_dropdown.currentText())
         self.frame_type_changed.emit(frame_type)
 
     def update_display(self, view_data: ViewData) -> None:
+        """
+        Updates the frame display with new data.
+
+        :param view_data: Data needed to update the UI.
+        """
         if view_data.frame is None:
             self.frame_widget.clear()
         else:
@@ -180,6 +251,11 @@ class View(QMainWindow):
             self.setFocus()
 
     def get_max_frame_size(self) -> Tuple[int, int]:
+        """
+        Returns the maximal dimension the frame image can have.
+
+        :return: Tuple containing the width and height of the scroll area.
+        """
         width = self.scroll_area.size().width()
         height = self.scroll_area.size().height()
 

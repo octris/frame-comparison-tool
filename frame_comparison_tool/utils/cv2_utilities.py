@@ -17,6 +17,17 @@ def get_text_size(text: str,
                   font_face: int,
                   font_scale: float,
                   thickness: int) -> Tuple[int, int]:
+    """
+    Calculates the total width and adjusted height of the text.
+
+    The height is adjusted by adding the baseline, ensuring correct vertical placement of the text.
+
+    :param text: The string to measure.
+    :param font_face: Font type.
+    :param font_scale: Font scale factor for text size.
+    :param thickness: Thickness of the text.
+    :return: A tuple containing the width and adjusted text height.
+    """
     size, baseline = cv2.getTextSize(text=text, fontFace=font_face, fontScale=font_scale, thickness=thickness)
     width, height = size
     height += baseline
@@ -34,6 +45,26 @@ def put_bordered_text(img: cv2.typing.MatLike,
                       thickness: int = _THICKNESS,
                       border_color: cv2.typing.Scalar = _BORDER_COLOR,
                       border_thickness: int = _BORDER_THICKNESS) -> cv2.typing.MatLike:
+    """
+    Renders bordered text onto the image.
+
+    The function draws the text with a border by first rendering the border color, then layering the actual text
+    color on top. The text is vertically aligned from the `origin` and can be aligned left, center, or right
+    horizontally.
+
+    :param img: The image on which to render the text.
+    :param text: The text to display, supports multi-line (separated by '\n').
+    :param origin: The starting point (x, y) of the text.
+    :param align: Horizontal text alignment (left, center, or right).
+    :param font_face: Font type.
+    :param font_scale: Font scale factor for text size.
+    :param color: Color of the text.
+    :param thickness: Thickness of the text.
+    :param border_color: Color of the text border.
+    :param border_thickness: Thickness of the text border.
+    :return: Modified image with rendered text.
+    """
+
     y_offset = origin[1]
 
     for line in text.splitlines():
