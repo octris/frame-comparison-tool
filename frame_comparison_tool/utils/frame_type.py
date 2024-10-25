@@ -6,10 +6,6 @@ class FrameType(MultiValueEnum):
     Enumeration representing video frame types.
     """
 
-    UNKNOWN = 'Unknown', 63
-    """
-    Unknown frame type.
-    """
     B_TYPE = 'B-Type', 66
     """
     B-frame
@@ -21,4 +17,8 @@ class FrameType(MultiValueEnum):
     P_TYPE = 'P-Type', 80
     """
     P-frame
+    """
+    UNKNOWN = 'Unknown', 63
+    """
+    Unknown frame type.
     """

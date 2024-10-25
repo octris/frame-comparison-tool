@@ -28,6 +28,9 @@ class Presenter:
         """``View`` instance."""
 
         self.view.set_presenter(self)
+        self.view.set_init_values(files=model.sources.keys(), seed=self.model.seed,
+                                  frame_type=self.model.curr_frame_type,
+                                  display_mode=model.curr_mode)
         self._connect_signals()
 
     def _connect_signals(self) -> None:
@@ -43,7 +46,7 @@ class Presenter:
         self.view.frame_type_changed.connect(self.change_frame_type)
         self.view.offset_changed.connect(self.offset_frame_position)
         self.view.seed_changed.connect(self.change_seed)
-        self.view.shown.connect(self.set_max_frame_size)
+        self.view.shown.connect(self.resize_frame)
 
     def add_source(self, file_path: str) -> None:
         """
@@ -133,16 +136,8 @@ class Presenter:
         :param frame_size: A tuple containing the desired frame width and height.
         """
         if frame_size != self.model.max_frame_size:
-            self.set_max_frame_size(max_frame_size=frame_size)
+            self.model.max_frame_size = frame_size
             self.update_display()
-
-    def set_max_frame_size(self, max_frame_size: Tuple[int, int]) -> None:
-        """
-        Sets maximum frame size to the ``Model`` object.
-
-        :param max_frame_size: A tuple containing the maximum frame width and height.
-        """
-        self.model.max_frame_size = max_frame_size
 
     def update_display(self) -> None:
         """

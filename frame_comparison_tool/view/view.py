@@ -66,7 +66,6 @@ class View(QMainWindow):
 
         self.spin_box = QSpinBox()
         self.spin_box.setRange(0, 10000)
-        self.spin_box.setValue(0)
         self.spin_box.valueChanged.connect(self._on_seed_changed)
         self.config_layout.addWidget(self.spin_box)
 
@@ -97,6 +96,15 @@ class View(QMainWindow):
 
         self.setLayout(self.central_layout)
         self.setFocus()
+
+    def set_init_values(self, files: Optional[str], seed: int, frame_type: FrameType, display_mode: DisplayMode):
+        self.spin_box.setValue(seed)
+        self.frame_type_dropdown.setCurrentIndex(list(FrameType).index(frame_type))
+        self.mode_dropdown.setCurrentIndex(list(DisplayMode).index(display_mode))
+
+        if files:
+            for file in files:
+                self.on_add_source(file)
 
     def set_presenter(self, presenter: 'Presenter') -> None:
         """

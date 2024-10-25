@@ -9,18 +9,19 @@ from frame_comparison_tool.utils import FrameLoader, FrameType
 from frame_comparison_tool.utils import DisplayMode
 
 
+# TODO: Update documentation
+
 class Model:
     """
     The model class, responsible for backend logic regarding storing and manipulating data.
     """
 
-    def __init__(self, n_samples: int = 5):
+    def __init__(self, files: Optional[List[str]], n_samples: int, seed: int,
+                 frame_type: FrameType):
         """
         Initializes a ``Model`` instance.
-
-        :param n_samples: Number of frames to be samples.
         """
-        self.sources: OrderedDict[str, FrameLoader] = OrderedDict()
+        self.sources = OrderedDict({})
         """Dictionary mapping file path to ``FrameLoader`` object."""
         self.n_samples: int = n_samples
         """Number of frame samples."""
@@ -30,14 +31,16 @@ class Model:
         """Range (0, `n_samples - 1`), denotes the frame index inside the `frame_position` list."""
         self.frame_positions: List[int] = []
         """List of frame indices, range (0, `total_frames - 1`)."""
-        self.curr_mode = DisplayMode.CROPPED
+        self.curr_mode = DisplayMode.SCALED
         """Current display mode."""
         self.max_frame_size: Optional[Tuple[int, int]] = None
         """Maximum frame width and height."""
-        self.curr_frame_type: FrameType = FrameType.B_TYPE
+        self.curr_frame_type: FrameType = frame_type
         """Current frame type."""
-        self.seed: int = 0
+        self.seed: int = seed
         """Random seed."""
+
+        [self.add_source(file) for file in files] if files else None
 
     def offset(self, direction: int) -> None:
         """
