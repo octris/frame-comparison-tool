@@ -49,7 +49,6 @@ class View(QMainWindow):
         self.frame_widget.setStyleSheet('background-color: white')
         self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.frame_widget.setMinimumSize(1, 1)
 
         self.scroll_area = PannableScrollArea()
         self.scroll_area.setWidget(self.frame_widget)

@@ -6,6 +6,8 @@ from frame_comparison_tool.view import View
 from frame_comparison_tool.utils.argument_parser import parse_arguments
 
 
+# TODO: Update documentation
+
 def main():
     app = QApplication([])
     args = parse_arguments()

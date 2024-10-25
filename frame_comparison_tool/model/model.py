@@ -9,8 +9,6 @@ from frame_comparison_tool.utils import FrameLoader, FrameType
 from frame_comparison_tool.utils import DisplayMode
 
 
-# TODO: Update documentation
-
 class Model:
     """
     The model class, responsible for backend logic regarding storing and manipulating data.
