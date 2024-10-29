@@ -47,18 +47,18 @@ class VideoCaptureFailed(Exception):
         super().__init__(self.message)
 
 
-class FrameIndexError(Exception):
+class FramePositionError(Exception):
     """
-    Raised when an invalid frame index is supplied.
+    Raised when an invalid frame position is supplied.
     """
 
-    def __init__(self, idx: int) -> None:
+    def __init__(self, pos: int) -> None:
         """
-        Initialize a ``FrameIndexError`` instance.
+        Initialize a ``FramePositionError`` instance.
 
-        :param idx: Index of frame in video.
+        :param pos: Position of frame in video, range (0, `total_frames - 1`)
         """
-        self.message = f"Could not set frame at index {idx}"
+        self.message = f"Could not set frame at position {pos}"
         super().__init__(self.message)
 
 

@@ -7,16 +7,8 @@ class Align(Enum):
     """
 
     LEFT = 0
-    """
-    Align text to the left side.
-    """
+    """Align text to the left side."""
     CENTER = 1
-    """
-    Center the text horizontally.
-    """
+    """Center the text horizontally."""
     RIGHT = 2
-    """
-    Align text to the right side.
-    """
-
-
+    """Align text to the right side."""

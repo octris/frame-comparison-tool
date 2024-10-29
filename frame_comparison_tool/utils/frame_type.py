@@ -7,18 +7,10 @@ class FrameType(MultiValueEnum):
     """
 
     B_TYPE = 'B-Type', 66
-    """
-    B-frame
-    """
+    """B-frame"""
     I_TYPE = 'I-Type', 73
-    """
-    I-frame
-    """
+    """I-frame"""
     P_TYPE = 'P-Type', 80
-    """
-    P-frame
-    """
+    """P-frame"""
     UNKNOWN = 'Unknown', 63
-    """
-    Unknown frame type.
-    """
+    """Unknown frame type."""

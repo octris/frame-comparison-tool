@@ -1,12 +1,9 @@
-import random
-from pathlib import Path
-
 import numpy as np
-from collections import OrderedDict
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, OrderedDict
 
 from frame_comparison_tool.utils import FrameLoader, FrameType
 from frame_comparison_tool.utils import DisplayMode
+from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 
 
 class Model:
@@ -19,98 +16,44 @@ class Model:
         """
         Initializes a ``Model`` instance.
         """
-        self.sources = OrderedDict({})
-        """Dictionary mapping file path to ``FrameLoader`` object."""
-        self.n_samples: int = n_samples
-        """Number of frame samples."""
+
+        self.frame_loader_manager = FrameLoaderManager(files=files, n_samples=n_samples, seed=seed,
+                                                       frame_type=frame_type)
+        """Instance of ``FrameLoaderManager`` responsible for handling all video sources and frames."""
         self.curr_src_idx: int = 0
         """Index of current video source."""
         self.curr_frame_idx: int = 0
-        """Range (0, `n_samples - 1`), denotes the frame index inside the `frame_position` list."""
-        self.frame_positions: List[int] = []
-        """List of frame indices, range (0, `total_frames - 1`)."""
+        """Range (0, `n_samples - 1`), denotes the frame index inside the `frame_positions` list."""
         self.curr_mode = DisplayMode.SCALED
         """Current display mode."""
         self.max_frame_size: Optional[Tuple[int, int]] = None
         """Maximum frame width and height."""
-        self.curr_frame_type: FrameType = frame_type
-        """Current frame type."""
-        self.seed: int = seed
-        """Random seed."""
 
-        [self.add_source(file) for file in files] if files else None
+    @property
+    def frame_positions(self) -> List[int]:
+        return self.frame_loader_manager.frame_positions
 
-    def offset(self, direction: int) -> None:
-        """
-        Replaces current frame with the closest frame of the same type in specified direction (backward or forward).
+    @property
+    def sources(self) -> OrderedDict[str, FrameLoader]:
+        return self.frame_loader_manager.sources
 
-        :param direction: -1 for backward, 1 for forward.
-        """
-        frame_position, frame = self.get_current_source().offset(self.frame_positions[self.curr_frame_idx],
-                                                                 direction,
-                                                                 self.curr_frame_type)
-        self.frame_positions[self.curr_frame_idx] = frame_position
-        self.get_current_source().frames[self.curr_frame_idx] = frame
+    @property
+    def source_count(self) -> int:
+        return self.frame_loader_manager.source_count
 
-    def _delete_sampled_frames(self) -> None:
-        """
-        Deletes sampled frames from the model.
-        """
-        for source in self.sources.values():
-            source.delete_frames()
+    @property
+    def seed(self) -> int:
+        return self.frame_loader_manager.seed
 
-    def _sample_frames(self) -> None:
-        """
-        Randomly samples video frames and adds them to the model.
-        """
-        random.seed(self.seed)
-        min_total_frames = min([source.total_frames for source in self.sources.values()])
-        self.frame_positions = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
+    @property
+    def frame_type(self) -> FrameType:
+        return self.frame_loader_manager.frame_type
 
-        for source in self.sources.values():
-            source.sample_frames(self.frame_positions, self.curr_frame_type)
+    def set_seed(self, seed: int) -> None:
+        self.frame_loader_manager.seed = seed
 
-    def resample_frames(self) -> None:
-        """
-        Deletes current video frames and samples new ones.
-        """
-        if len(self.sources) > 0:
-            self._delete_sampled_frames()
-            self._sample_frames()
-
-    def add_source(self, file_path: str) -> bool:
-        """
-        Adds video source to the model.
-
-        :param file_path: Video source string.
-        :return: ``True`` if source was successfully added, ``False`` if source already exists.
-        """
-        if file_path in self.sources:
-            return False
-        else:
-            frame_loader = FrameLoader(Path(file_path))
-            self.sources[file_path] = frame_loader
-            self._sample_frames()
-            return True
-
-    def delete_source(self, file_path: str) -> int:
-        """
-        Deletes video source from the model.
-
-        :param file_path: Path of the video source to delete.
-        :return: Index of deleted source.
-        """
-        src_idx = list(self.sources.keys()).index(file_path)
-
-        if self.curr_src_idx == len(self.sources) - 1 and self.curr_src_idx > 0:
-            self.curr_src_idx -= 1
-
-        del self.sources[file_path]
-
-        if len(self.sources) == 0:
-            self.curr_frame_idx = 0
-
-        return src_idx
+    def set_frame_type(self, frame_type: FrameType) -> None:
+        self.frame_loader_manager.frame_type = frame_type
 
     def get_current_source(self) -> FrameLoader:
         """
@@ -118,7 +61,7 @@ class Model:
 
         :return: ``FrameLoader`` object representing current source.
         """
-        return list(self.sources.values())[self.curr_src_idx]
+        return self.frame_loader_manager.get_source(self.curr_src_idx)
 
     def get_current_frame(self) -> np.ndarray:
         """
@@ -127,3 +70,41 @@ class Model:
         :return: Current frame.
         """
         return self.get_current_source().frames[self.curr_frame_idx]
+
+    def add_source(self, file_path: str) -> bool:
+        """
+        Adds video source to the model.
+
+        :param file_path: Video source string.
+        :return: ``True`` if source was successfully added, ``False`` if source already exists.
+        """
+        return self.frame_loader_manager.add_source(file_path)
+
+    def delete_source(self, file_path: str) -> int:
+        """
+        Deletes video source from the model.
+
+        :param file_path: Path of the video source to delete.
+        :return: Index of deleted source.
+        """
+        if self.curr_src_idx == len(self.frame_loader_manager.sources) - 1 and self.curr_src_idx > 0:
+            self.curr_src_idx -= 1
+
+        src_idx = self.frame_loader_manager.delete_source(file_path)
+
+        if len(self.frame_loader_manager.sources) == 0:
+            self.curr_frame_idx = 0
+
+        return src_idx
+
+    def resample_frames(self) -> None:
+        self.frame_loader_manager.resample_frames()
+
+    def offset_frame(self, direction: int) -> None:
+        """
+        Replaces current frame with the closest frame of the same type in specified direction (backward or forward).
+
+        :param direction: -1 for backward, 1 for forward.
+        """
+        self.frame_loader_manager.offset_frame(direction=direction, src_idx=self.curr_src_idx,
+                                               frame_idx=self.curr_frame_idx)

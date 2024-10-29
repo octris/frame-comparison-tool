@@ -3,7 +3,7 @@ from typing import override, List, Optional, Tuple
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QSpinBox
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData
 from .pannable_scroll_area import PannableScrollArea
 
@@ -29,15 +29,16 @@ class View(QMainWindow):
         Initializes a ``View`` instance.
         """
         super().__init__()
+
         self.presenter: Optional['Presenter'] = None
         """``Presenter`` instance."""
+
         self._init_ui()
 
     def _init_ui(self) -> None:
         """
         Initializes the user interface.
         """
-
         self.setGeometry(100, 100, 1000, 800)
         self.setWindowTitle(f'Frame Comparison Tool')
 
@@ -159,7 +160,7 @@ class View(QMainWindow):
         return super().keyPressEvent(event)
 
     @override
-    def mousePressEvent(self, event) -> None:
+    def mousePressEvent(self, event: QMouseEvent) -> None:
         """
         Handles mouse press events.
 
@@ -198,13 +199,13 @@ class View(QMainWindow):
         self.central_layout.update()
         self.update()
 
-    def on_delete_source(self, idx) -> None:
+    def on_delete_source(self, src_idx: int) -> None:
         """
         Deletes source from the UI.
 
-        :param idx: Index of the deleted source.
+        :param src_idx: Index of the deleted source.
         """
-        widget_to_remove = self.added_sources_widgets.pop(idx)
+        widget_to_remove = self.added_sources_widgets.pop(src_idx)
         widget_to_remove.setParent(None)
         widget_to_remove.deleteLater()
 

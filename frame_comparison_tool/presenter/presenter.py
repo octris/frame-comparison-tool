@@ -29,7 +29,7 @@ class Presenter:
 
         self.view.set_presenter(self)
         self.view.set_init_values(files=model.sources.keys(), seed=self.model.seed,
-                                  frame_type=self.model.curr_frame_type,
+                                  frame_type=self.model.frame_type,
                                   display_mode=model.curr_mode)
         self._connect_signals()
 
@@ -54,8 +54,8 @@ class Presenter:
 
         :param file_path: Path to video source.
         """
-        if self.model.add_source(file_path):
-            self.view.on_add_source(file_path)
+        if self.model.add_source(file_path=file_path):
+            self.view.on_add_source(file_path=file_path)
             self.update_display()
 
     def delete_source(self, file_path: str) -> None:
@@ -64,8 +64,8 @@ class Presenter:
 
         :param file_path: Path to video source.
         """
-        idx = self.model.delete_source(file_path)
-        self.view.on_delete_source(idx)
+        src_idx = self.model.delete_source(file_path)
+        self.view.on_delete_source(src_idx)
         self.update_display()
 
     def change_seed(self, seed: int):
@@ -74,7 +74,7 @@ class Presenter:
 
         :param seed: New seed.
         """
-        self.model.seed = seed
+        self.model.set_seed(seed)
         self.model.resample_frames()
         self.update_display()
 
@@ -84,7 +84,7 @@ class Presenter:
 
         :param direction: The direction of the frame offset.
         """
-        self.model.offset(direction)
+        self.model.offset_frame(direction)
         self.update_display()
 
     def change_frame_type(self, frame_type: FrameType) -> None:
@@ -93,8 +93,8 @@ class Presenter:
 
         :param frame_type: New frame type.
         """
-        if self.model.curr_frame_type != frame_type:
-            self.model.curr_frame_type = frame_type
+        if self.model.frame_type != frame_type:
+            self.model.set_frame_type(frame_type=frame_type)
             self.model.resample_frames()
             self.update_display()
 
@@ -147,7 +147,7 @@ class Presenter:
         mode: DisplayMode = self.model.curr_mode
         view_data: ViewData
 
-        if len(self.model.sources) == 0:
+        if self.model.source_count == 0:
             view_data = ViewData(frame=None, mode=mode)
         else:
             frame = self.model.get_current_frame()
