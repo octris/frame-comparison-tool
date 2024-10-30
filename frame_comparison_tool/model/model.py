@@ -55,21 +55,13 @@ class Model:
     def set_frame_type(self, frame_type: FrameType) -> None:
         self.frame_loader_manager.frame_type = frame_type
 
-    def get_current_source(self) -> FrameLoader:
-        """
-        Retrieves current video source.
-
-        :return: ``FrameLoader`` object representing current source.
-        """
-        return self.frame_loader_manager.get_source(self.curr_src_idx)
-
     def get_current_frame(self) -> np.ndarray:
         """
         Retrieves current frame of current video source.
 
         :return: Current frame.
         """
-        return self.get_current_source().frames[self.curr_frame_idx]
+        return self.frame_loader_manager.get_frame(src_idx=self.curr_src_idx, frame_idx=self.curr_frame_idx)
 
     def add_source(self, file_path: str) -> bool:
         """

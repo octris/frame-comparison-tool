@@ -8,9 +8,9 @@ import random
 from frame_comparison_tool.utils import FrameLoader, FrameType
 
 
+
 class FrameLoaderManager:
-    def __init__(self, files: Optional[List[str]], n_samples: int, seed: int,
-                 frame_type: FrameType):
+    def __init__(self, files: Optional[List[str]], n_samples: int, seed: int, frame_type: FrameType):
         self.sources: OrderedDict[str, FrameLoader] = OrderedDict({})
         """Dictionary mapping file path to ``FrameLoader`` object."""
         self.n_samples: int = n_samples
@@ -51,6 +51,7 @@ class FrameLoaderManager:
     def get_frame(self, src_idx: int, frame_idx: int) -> np.ndarray:
         return self.get_source(src_idx).frames[frame_idx]
 
+    # TODO: This needs to be a background process
     def offset_frame(self, direction: int, src_idx: int, frame_idx: int) -> None:
         source = self.get_source(src_idx=src_idx)
         frame_pos, frame = source.offset(
@@ -61,6 +62,7 @@ class FrameLoaderManager:
         self.frame_positions[frame_idx] = frame_pos
         source.frames[frame_idx] = frame
 
+    # TODO: Only for one source? Efficiency?
     def resample_frames(self) -> None:
         if self.sources:
             self._clear_frames()
@@ -73,6 +75,7 @@ class FrameLoaderManager:
         min_total_frames = min([source.total_frames for source in self.sources.values()])
         self.frame_positions = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
 
+    # TODO: This needs to be a background process
     def _sample_frames(self, frame_loader: FrameLoader) -> None:
         if len(self.frame_positions) == 0:
             self._generate_sample_positions()
