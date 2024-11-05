@@ -1,9 +1,10 @@
 import numpy as np
-from typing import List, Tuple, Optional, OrderedDict
+from typing import List, Tuple, Optional, OrderedDict, Callable
 
-from frame_comparison_tool.utils import FrameLoader, FrameType
+from frame_comparison_tool.utils import FrameLoader, FrameType, Operation
 from frame_comparison_tool.utils import DisplayMode
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
+from frame_comparison_tool.utils.worker import Worker
 
 
 class Model:
@@ -28,6 +29,13 @@ class Model:
         """Current display mode."""
         self.max_frame_size: Optional[Tuple[int, int]] = None
         """Maximum frame width and height."""
+
+        self.worker = Worker(frame_loader_manager=self.frame_loader_manager)
+        self.worker.start()
+
+    def set_on_frame_sample_callback(self, on_frame_sample: Callable):
+        # self.worker.on_frame_sample = on_frame_sample
+        self.worker.on_frames_ready.connect(on_frame_sample)
 
     @property
     def frame_positions(self) -> List[int]:
@@ -90,7 +98,7 @@ class Model:
         return src_idx
 
     def resample_frames(self) -> None:
-        self.frame_loader_manager.resample_frames()
+        self.worker.add_task(Operation.SAMPLE)
 
     def offset_frame(self, direction: int) -> None:
         """

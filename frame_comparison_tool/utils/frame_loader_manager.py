@@ -65,10 +65,11 @@ class FrameLoaderManager:
     # TODO: Only for one source? Efficiency?
     def resample_frames(self) -> None:
         if self.sources:
-            self._clear_frames()
             self._generate_sample_positions()
             for source in self.sources.values():
                 self._sample_frames(source)
+
+            self._clear_frames()
 
     def _generate_sample_positions(self):
         random.seed(self.seed)
@@ -83,5 +84,5 @@ class FrameLoaderManager:
         frame_loader.sample_frames(frame_positions=self.frame_positions, frame_type=self.frame_type)
 
     def _clear_frames(self) -> None:
-        for source in self.sources.values():
-            source.delete_frames()
+        for frame_loader in self.sources.values():
+            frame_loader.delete_frames()
