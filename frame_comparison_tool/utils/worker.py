@@ -10,6 +10,7 @@ from PySide6.QtCore import QThread, Signal
 # TODO: Setter for callbacks
 class Worker(QThread):
     on_frames_ready: Signal = Signal()
+    on_offset_done: Signal = Signal()
 
     def __init__(self, frame_loader_manager: FrameLoaderManager):
         super().__init__()
@@ -27,11 +28,11 @@ class Worker(QThread):
 
             if operation == Operation.SAMPLE:
                 self.frame_loader_manager.resample_frames()
-                # self.on_frame_sample()
                 self.on_frames_ready.emit()
-
             elif operation == Operation.OFFSET:
-                pass
+                self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"), src_idx=kwargs.get("src_idx"),
+                                                       frame_idx=kwargs.get("frame_idx"))
+                self.on_offset_done.emit()
             else:
                 # TODO: InvalidOperationError
                 pass

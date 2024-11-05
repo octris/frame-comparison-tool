@@ -41,13 +41,6 @@ class FrameLoader:
         """
         return int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    def delete_frames(self) -> None:
-        """
-        Deletes all frames from memory.
-        """
-        if len(self.frames) > 0:
-            self.frames.clear()
-
     def _get_frame(self) -> Optional[cv2.typing.MatLike]:
         """
         Reads the current frame from the ``VideoCapture`` object.
@@ -159,10 +152,14 @@ class FrameLoader:
         :param frame_positions: List of starting frame positions.
         :param frame_type: Desired frame type.
         """
-        if len(self.frames) > 0:
-            self.frames.clear()
+        frame_buffer = []
 
         for pos in frame_positions:
             pos, image = self._find_closest_frame(pos, frame_type)
             frame = self._get_composited_image(pos, image, frame_type)
-            self.frames.append((cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+            frame_buffer.append((cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+
+        if len(self.frames) > 0:
+            self.frames.clear()
+
+        self.frames.extend(frame_buffer)

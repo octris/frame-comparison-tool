@@ -33,9 +33,11 @@ class Model:
         self.worker = Worker(frame_loader_manager=self.frame_loader_manager)
         self.worker.start()
 
-    def set_on_frame_sample_callback(self, on_frame_sample: Callable):
-        # self.worker.on_frame_sample = on_frame_sample
+    def set_on_frame_sample_callback(self, on_frame_sample: Callable) -> None:
         self.worker.on_frames_ready.connect(on_frame_sample)
+
+    def set_on_offset_frame_callback(self, on_offset_frame: Callable) -> None:
+        self.worker.on_offset_done.connect(on_offset_frame)
 
     @property
     def frame_positions(self) -> List[int]:

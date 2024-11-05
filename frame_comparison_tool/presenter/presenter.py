@@ -25,6 +25,7 @@ class Presenter:
         self.model: Model = model
         """``Model`` instance."""
         self.model.set_on_frame_sample_callback(self.update_display)
+        self.model.set_on_offset_frame_callback(self.update_display)
 
         self.view: View = view
         """``View`` instance."""
