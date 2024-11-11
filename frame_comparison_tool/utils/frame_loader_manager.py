@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from pathlib import Path
 from typing import List, Optional
+from bisect import bisect_right
 
 import numpy as np
 import random
@@ -35,7 +36,7 @@ class FrameLoaderManager:
         else:
             frame_loader = FrameLoader(Path(file_path))
             self.sources[file_path] = frame_loader
-            self._sample_frames(frame_loader=frame_loader)
+            # self._sample_frames(frame_loader=frame_loader)
             return True
 
     def delete_source(self, file_path: str) -> int:
@@ -60,20 +61,41 @@ class FrameLoaderManager:
         self.frame_positions[frame_idx] = frame_pos
         source.frames[frame_idx] = frame
 
-    # TODO: Only for one source? Efficiency?
-    def resample_frames(self) -> None:
+    def resample_all_frames(self) -> None:
         if self.sources:
-            self._generate_sample_positions()
-            for source in self.sources.values():
-                self._sample_frames(source)
+            for frame_loader in self.sources.values():
+                self._generate_frame_positions(frame_loader=frame_loader)
+            for frame_loader in self.sources.values():
+                self._sample_frames(frame_loader=frame_loader)
 
-    def _generate_sample_positions(self):
-        random.seed(self.seed)
-        min_total_frames = min([source.total_frames for source in self.sources.values()])
-        self.frame_positions = sorted([random.randint(0, min_total_frames) for _ in range(self.n_samples)])
+    # def _resample_frames(self, frame_loader: FrameLoader):
+    #     self._generate_frame_positions(frame_loader=frame_loader)
+    #     self._sample_frames(frame_loader=frame_loader)
 
-    def _sample_frames(self, frame_loader: FrameLoader) -> None:
-        if len(self.frame_positions) == 0:
-            self._generate_sample_positions()
+    def _sample_frames(self, frame_loader: FrameLoader):
+        if len(self.frame_positions) == 0 or frame_loader.total_frames < max(self.frame_positions):
+            self._generate_frame_positions(frame_loader=frame_loader)
 
         frame_loader.sample_frames(frame_positions=self.frame_positions, frame_type=self.frame_type)
+
+    def _generate_frame_positions(self, frame_loader: FrameLoader):
+        if len(self.frame_positions) == 0:
+            self.frame_positions = self._generate_random_frame_positions(min_frame_pos=0,
+                                                                         max_frame_pos=frame_loader.total_frames,
+                                                                         n_samples=self.n_samples)
+        elif (idx := bisect_right(self.frame_positions, frame_loader.total_frames)) < len(self.frame_positions):
+            new_frame_positions = self._generate_random_frame_positions(
+                min_frame_pos=(self.frame_positions[idx - 1 if idx > 0 else idx] + 1),
+                max_frame_pos=frame_loader.total_frames,
+                n_samples=self.n_samples - idx)
+
+            self.frame_positions = self.frame_positions[:idx]
+            self.frame_positions.extend(new_frame_positions)
+        else:
+            pass
+
+    def _generate_random_frame_positions(self, min_frame_pos: int, max_frame_pos: int, n_samples: int) -> List[int]:
+        random.seed(self.seed)
+        frame_positions = sorted([random.randint(min_frame_pos, max_frame_pos) for _ in range(n_samples)])
+
+        return frame_positions

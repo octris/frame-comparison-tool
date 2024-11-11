@@ -1,13 +1,13 @@
 from queue import Queue
 from typing import override, Optional, Any, Tuple, Dict, Callable
 
+from frame_comparison_tool.utils.exceptions import InvalidOperationError
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.operation import Operation
 
 from PySide6.QtCore import QThread, Signal
 
 
-# TODO: Setter for callbacks
 class Worker(QThread):
     on_frames_ready: Signal = Signal()
     on_offset_done: Signal = Signal()
@@ -22,17 +22,16 @@ class Worker(QThread):
         self.queue.put((operation, kwargs))
 
     @override
-    def run(self):
+    def run(self) -> None:
         while True:
             operation, kwargs = self.queue.get()
 
             if operation == Operation.SAMPLE:
-                self.frame_loader_manager.resample_frames()
+                self.frame_loader_manager.resample_all_frames()
                 self.on_frames_ready.emit()
             elif operation == Operation.OFFSET:
                 self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"), src_idx=kwargs.get("src_idx"),
                                                        frame_idx=kwargs.get("frame_idx"))
                 self.on_offset_done.emit()
             else:
-                # TODO: InvalidOperationError
-                pass
+                raise InvalidOperationError(operation)

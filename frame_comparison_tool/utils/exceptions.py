@@ -1,3 +1,4 @@
+from frame_comparison_tool.utils.operation import Operation
 from frame_comparison_tool.utils.frame_type import FrameType
 from frame_comparison_tool.utils.align import Align
 
@@ -102,4 +103,14 @@ class ZeroDimensionError(ValueError):
         Initialize a ``ZeroDimensionError`` instance.
         """
         self.message = f"Width or height cannot be zero"
+        super().__init__(self.message)
+
+
+class InvalidOperationError(ValueError):
+    """
+    Raised when an invalid ``Operation`` option is supplied.
+    """
+
+    def __init__(self, operation: Operation) -> None:
+        self.message = f"Invalid operation value supplied: {operation}"
         super().__init__(self.message)
