@@ -13,7 +13,7 @@ class View(QMainWindow):
     This class creates the GUI for user interactions and communicates with the ``Presenter`` through signals.
     """
 
-    add_source_requested = Signal(str)
+    add_source_requested = Signal(list)
     delete_source_requested = Signal(str)
     mode_changed = Signal(DisplayMode)
     frame_changed = Signal(int)
@@ -175,7 +175,7 @@ class View(QMainWindow):
         """
         file_path, _ = QFileDialog.getOpenFileName(self)
         if file_path:
-            self.add_source_requested.emit(file_path)
+            self.add_source_requested.emit([file_path])
 
     def on_add_source(self, file_path: str) -> None:
         """

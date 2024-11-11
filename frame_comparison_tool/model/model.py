@@ -59,8 +59,9 @@ class Model:
     def frame_type(self) -> FrameType:
         return self.frame_loader_manager.frame_type
 
-    def set_seed(self, seed: int) -> None:
-        self.frame_loader_manager.seed = seed
+    def update_seed(self, seed: int) -> None:
+        if seed != self.seed:
+            self.frame_loader_manager.update_seed(seed)
 
     def set_frame_type(self, frame_type: FrameType) -> None:
         self.frame_loader_manager.frame_type = frame_type
@@ -73,14 +74,14 @@ class Model:
         """
         return self.frame_loader_manager.get_frame(src_idx=self.curr_src_idx, frame_idx=self.curr_frame_idx)
 
-    def add_source(self, file_path: str) -> bool:
+    def add_source(self, file_paths: List[str]) -> List[Optional[str]]:
         """
         Adds video source to the model.
 
-        :param file_path: Video source string.
+        :param file_paths: Video source string.
         :return: ``True`` if source was successfully added, ``False`` if source already exists.
         """
-        return self.frame_loader_manager.add_source(file_path)
+        return self.frame_loader_manager.add_source(file_paths=file_paths)
 
     def delete_source(self, file_path: str) -> int:
         """

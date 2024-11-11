@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, List, Optional
 
 import numpy as np
 
@@ -51,14 +51,18 @@ class Presenter:
         self.view.seed_changed.connect(self.change_seed)
         self.view.shown.connect(self.resize_frame)
 
-    def add_source(self, file_path: str) -> None:
+    def add_source(self, file_paths: List[str]) -> None:
         """
         Adds source and updates display.
 
-        :param file_path: Path to video source.
+        :param file_paths: Paths to video source.
         """
-        if self.model.add_source(file_path=file_path):
-            self.view.on_add_source(file_path=file_path)
+
+        added_file_paths: List[Optional[str]] = self.model.add_source(file_paths=file_paths)
+
+        if added_file_paths:
+            for file_path in added_file_paths:
+                self.view.on_add_source(file_path=file_path)
             self.update_display()
 
     def delete_source(self, file_path: str) -> None:
@@ -77,7 +81,7 @@ class Presenter:
 
         :param seed: New seed.
         """
-        self.model.set_seed(seed)
+        self.model.update_seed(seed)
         self.model.resample_frames()
         self.update_display()
 
