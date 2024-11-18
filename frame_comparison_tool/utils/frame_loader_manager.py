@@ -4,8 +4,8 @@ from typing import List, Optional
 from bisect import bisect_right
 from sys import maxsize
 
-import numpy as np
 import random
+import numpy as np
 
 from frame_comparison_tool.utils import FrameLoader, FrameType
 
@@ -39,7 +39,7 @@ class FrameLoaderManager:
         if file_paths:
             for file_path in file_paths:
                 if file_path not in self.sources.keys():
-                    frame_loader = FrameLoader(Path(file_path))
+                    frame_loader = FrameLoader(file_path=Path(file_path))
                     self.sources[file_path] = frame_loader
                     added_file_paths.append(file_path)
 
@@ -58,17 +58,11 @@ class FrameLoaderManager:
         return list(self.sources.values())[src_idx]
 
     def get_frame(self, src_idx: int, frame_idx: int) -> np.ndarray:
-        return self.get_source(src_idx).frames[frame_idx]
+        return self.get_source(src_idx).frame_data[frame_idx].frame
 
     def offset_frame(self, direction: int, src_idx: int, frame_idx: int) -> None:
         source = self.get_source(src_idx=src_idx)
-        frame_pos, frame = source.offset(
-            frame_pos=self.frame_positions[frame_idx],
-            direction=direction,
-            frame_type=self.frame_type
-        )
-        self.frame_positions[frame_idx] = frame_pos
-        source.frames[frame_idx] = frame
+        source.offset(frame_idx=frame_idx, direction=direction)
 
     def resample_all_frames(self) -> None:
         if self.sources:

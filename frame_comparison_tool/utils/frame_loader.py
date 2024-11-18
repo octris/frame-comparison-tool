@@ -1,3 +1,5 @@
+from tkinter import Frame
+
 import cv2
 import numpy as np
 from pathlib import Path
@@ -5,6 +7,7 @@ from typing import List, Optional, Tuple
 from frame_comparison_tool.utils import put_bordered_text, Align, FrameType
 from frame_comparison_tool.utils.exceptions import NoMatchingFrameTypeError, ImageReadError, VideoCaptureFailed, \
     FramePositionError, InvalidOffsetError
+from frame_comparison_tool.utils.frame_data import FrameData
 
 
 class FrameLoader:
@@ -20,8 +23,8 @@ class FrameLoader:
         """
         self._file_path: Path = file_path
         self._video_capture: cv2.VideoCapture = cv2.VideoCapture(str(self._file_path.absolute()))
-        self.frames: List[np.ndarray] = []
-        self._total_frames = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.frame_data: List[FrameData] = []
+        self._total_frames: int = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
     @property
     def file_name(self) -> str:
@@ -39,7 +42,7 @@ class FrameLoader:
 
         :return: Total number of frames in the selected video.
         """
-        return int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        return self._total_frames
 
     def _get_frame(self) -> Optional[cv2.typing.MatLike]:
         """
@@ -58,32 +61,32 @@ class FrameLoader:
         else:
             raise VideoCaptureFailed()
 
-    def _set_frame_pos(self, frame_pos: int) -> None:
+    def _set_frame_pos(self, frame_position: int) -> None:
         """
         Sets the ``VideoCapture`` object to a specific frame position.
 
-        :param frame_pos: Position of the frame to be set.
+        :param frame_position: Position of the frame to be set.
         :raises ``FramePositionError``: If the frame position if invalid.
         """
         if self._video_capture.isOpened():
-            self._video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_pos)
+            self._video_capture.set(cv2.CAP_PROP_POS_FRAMES, frame_position)
         else:
-            raise FramePositionError(frame_pos)
+            raise FramePositionError(frame_position)
 
     def _get_frame_type(self) -> FrameType:
         """
-        Retrieves the frame type.
+        Retrieves the frame type. Should only be used after the frame position is set in the ``VideoCapture`` object.
 
         :return: Frame type of current video frame.
         """
         frame_type = int(self._video_capture.get(cv2.CAP_PROP_FRAME_TYPE))
         return FrameType(frame_type)
 
-    def _get_composited_image(self, frame_pos: int, image: np.ndarray, frame_type: FrameType) -> np.ndarray:
+    def _get_composited_image(self, frame_position: int, image: np.ndarray, frame_type: FrameType) -> np.ndarray:
         """
         Gets the frame with added text information.
 
-        :param frame_pos: Position of current frame.
+        :param frame_position: Position of current frame.
         :param image: Original frame image.
         :param frame_type: Type of the current frame.
         :return: New image with text overlay added.
@@ -92,10 +95,11 @@ class FrameLoader:
 
         frame = put_bordered_text(img=image, text=f'SOURCE: {source}', origin=(0, 0))
         frame = put_bordered_text(img=frame,
-                                  text=f'FRAME TYPE: {frame_type.name}\nFRAME: {frame_pos}/{self.total_frames}',
+                                  text=f'FRAME TYPE: {frame_type.name}\nFRAME: {frame_position}/{self.total_frames}',
                                   origin=(frame.shape[1], 0), align=Align.RIGHT)
         return frame
 
+    # TODO: Change this to receive direction as argument
     def _find_closest_frame(self, frame_pos: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
         """
         Returns closest frame of specific frame type, starting from given position.
@@ -120,30 +124,44 @@ class FrameLoader:
 
         raise NoMatchingFrameTypeError(frame_type.value)
 
-    # TODO
-    def offset(self, frame_pos: int, direction: int, frame_type: FrameType) -> Tuple[int, Optional[np.ndarray]]:
+    def offset(self, frame_idx: int, direction: int) -> None:
         """
         Retrieves a new frame based on the current frame position, direction, and desired frame type.
 
-        :param frame_pos: Current frame position.
+        :param frame_idx: Current frame index.
         :param direction: The moving direction (-1 for backward, 1 for forward).
-        :param frame_type: Desired frame type.
         :return: A tuple containing the new frame's position and the frame itself.
         :raises ``InvalidOffsetError``: If the passed direction is zero.
         """
-        frame_pos += direction
-        frame: Optional[np.ndarray] = None
 
-        if direction > 0:
-            frame_pos, image = self._find_closest_frame(frame_pos, frame_type)
-            frame = self._get_composited_image(frame_pos, image, frame_type)
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        elif direction < 0:
-            pass
+        starting_position: int = self.frame_data[frame_idx].real_frame_position + direction
+        frame_type: FrameType = self.frame_data[frame_idx].frame_type
+
+        if direction == 1:
+            real_frame_position, frame = self._get_next_frame(frame_position=starting_position, frame_type=frame_type)
+        elif direction == -1:
+            real_frame_position, frame = self._get_previous_frame(frame_position=starting_position,
+                                                                  frame_type=frame_type)
         else:
             raise InvalidOffsetError(direction)
 
-        return frame_pos, frame
+        frame_data = FrameData(original_frame_position=starting_position,
+                               real_frame_position=real_frame_position,
+                               frame=frame,
+                               frame_type=frame_type)
+
+        self.frame_data[frame_idx] = frame_data
+
+    def _get_next_frame(self, frame_position: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
+        new_frame_position, image = self._find_closest_frame(frame_position, frame_type)
+        frame = self._get_composited_image(frame_position=new_frame_position, image=image, frame_type=frame_type)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        return new_frame_position, frame
+
+    # TODO
+    def _get_previous_frame(self, frame_position: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
+        return -1, np.ndarray(-1)
 
     def sample_frames(self, frame_positions: List[int], frame_type: FrameType) -> None:
         """
@@ -152,14 +170,25 @@ class FrameLoader:
         :param frame_positions: List of starting frame positions.
         :param frame_type: Desired frame type.
         """
-        frame_buffer = []
+        buffer: List[Tuple[int, FrameData]] = []
 
-        for pos in frame_positions:
-            pos, image = self._find_closest_frame(pos, frame_type)
-            frame = self._get_composited_image(pos, image, frame_type)
-            frame_buffer.append((cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)))
+        for idx, original_frame_position in enumerate(frame_positions):
+            if (self.frame_data
+                    and self.frame_data[idx].original_frame_position == original_frame_position
+                    and self.frame_data[idx].frame_type == frame_type):
+                continue
 
-        if len(self.frames) > 0:
-            self.frames.clear()
+            real_frame_position, frame = self._get_next_frame(frame_position=original_frame_position,
+                                                              frame_type=frame_type)
+            frame_data = FrameData(original_frame_position=original_frame_position,
+                                   real_frame_position=real_frame_position,
+                                   frame=frame,
+                                   frame_type=frame_type)
 
-        self.frames.extend(frame_buffer)
+            buffer.append((idx, frame_data))
+
+        if self.frame_data:
+            for idx, data in buffer:
+                self.frame_data[idx] = data  # type: ignore
+        else:
+            self.frame_data.extend(data[1] for data in buffer)
