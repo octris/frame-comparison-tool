@@ -25,10 +25,6 @@ class FrameLoaderManager:
 
         self.add_source(files)
 
-    @property
-    def source_count(self) -> int:
-        return len(self.sources)
-
     def update_seed(self, seed: int) -> None:
         self.seed = seed
         self.frame_positions.clear()

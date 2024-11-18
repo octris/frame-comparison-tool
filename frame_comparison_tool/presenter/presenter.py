@@ -112,7 +112,7 @@ class Presenter:
         :param direction: The direction of frame change.
         """
         self.model.curr_frame_idx += direction
-        self.model.curr_frame_idx = max(0, min(self.model.curr_frame_idx, len(self.model.frame_positions) - 1))
+        self.model.curr_frame_idx %= self.model.n_samples
         self.update_display()
 
     def change_source(self, direction: Direction) -> None:
@@ -123,7 +123,7 @@ class Presenter:
         """
 
         self.model.curr_src_idx += direction
-        self.model.curr_src_idx = max(0, min(self.model.curr_src_idx, len(self.model.sources) - 1))
+        self.model.curr_src_idx %= self.model.source_count
         self.update_display()
 
     def change_mode(self, mode: DisplayMode) -> None:

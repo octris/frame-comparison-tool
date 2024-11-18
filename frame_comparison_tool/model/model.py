@@ -39,6 +39,10 @@ class Model:
         self.worker.on_offset_done.connect(on_offset_frame)
 
     @property
+    def n_samples(self) -> int:
+        return self.frame_loader_manager.n_samples
+
+    @property
     def frame_positions(self) -> List[int]:
         return self.frame_loader_manager.frame_positions
 
@@ -48,7 +52,7 @@ class Model:
 
     @property
     def source_count(self) -> int:
-        return self.frame_loader_manager.source_count
+        return len(self.sources)
 
     @property
     def seed(self) -> int:
