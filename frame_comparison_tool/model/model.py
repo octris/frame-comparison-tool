@@ -1,8 +1,7 @@
 import numpy as np
 from typing import List, Tuple, Optional, OrderedDict, Callable
 
-from frame_comparison_tool.utils import FrameLoader, FrameType, Operation
-from frame_comparison_tool.utils import DisplayMode
+from frame_comparison_tool.utils import FrameLoader, FrameType, Operation, DisplayMode, Direction
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.worker import Worker
 
@@ -103,7 +102,7 @@ class Model:
     def resample_frames(self) -> None:
         self.worker.add_task(Operation.SAMPLE)
 
-    def offset_frame(self, direction: int) -> None:
+    def offset_frame(self, direction: Direction) -> None:
         """
         Replaces current frame with the closest frame of the same type in specified direction (backward or forward).
 

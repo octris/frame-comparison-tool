@@ -1,3 +1,4 @@
+from frame_comparison_tool.utils.direction import Direction
 from frame_comparison_tool.utils.operation import Operation
 from frame_comparison_tool.utils.frame_type import FrameType
 from frame_comparison_tool.utils.align import Align
@@ -63,18 +64,18 @@ class FramePositionError(Exception):
         super().__init__(self.message)
 
 
-class InvalidOffsetError(ValueError):
+class InvalidDirectionError(ValueError):
     """
-    Raised when offset direction is zero.
+    Raised when an invalid ``Direction`` option is supplied.
     """
 
-    def __init__(self, direction: int) -> None:
+    def __init__(self, direction: Direction) -> None:
         """
-        Initialize an ``InvalidOffsetError`` instance.
+        Initialize an ``InvalidDirectionError`` instance.
 
-        :param direction: Direction of offset.
+        :param direction: Enum representing the direction of the offset.
         """
-        self.message = f"Invalid offset value: {direction}"
+        self.message = f"Invalid offset value: {direction.value}"
         super().__init__(self.message)
 
 

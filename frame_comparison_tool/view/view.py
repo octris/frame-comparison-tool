@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QH
     QLabel, QFileDialog, QSpinBox
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
-from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData
+from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction
 from .pannable_scroll_area import PannableScrollArea
 
 
@@ -16,11 +16,11 @@ class View(QMainWindow):
     add_source_requested = Signal(list)
     delete_source_requested = Signal(str)
     mode_changed = Signal(DisplayMode)
-    frame_changed = Signal(int)
-    source_changed = Signal(int)
+    frame_changed = Signal(Direction)
+    source_changed = Signal(Direction)
     resize_requested = Signal(tuple)
     frame_type_changed = Signal(FrameType)
-    offset_changed = Signal(int)
+    offset_changed = Signal(Direction)
     seed_changed = Signal(int)
     shown = Signal(tuple)
 
@@ -145,17 +145,17 @@ class View(QMainWindow):
         :param event: Key event object.
         """
         if event.key() == Qt.Key.Key_Left:
-            self.frame_changed.emit(-1)
+            self.frame_changed.emit(Direction(-1))
         elif event.key() == Qt.Key.Key_Right:
-            self.frame_changed.emit(1)
+            self.frame_changed.emit(Direction(1))
         elif event.key() == Qt.Key.Key_Down:
-            self.source_changed.emit(-1)
+            self.source_changed.emit(Direction(-1))
         elif event.key() == Qt.Key.Key_Up:
-            self.source_changed.emit(1)
+            self.source_changed.emit(Direction(1))
         elif event.key() == Qt.Key.Key_Plus:
-            self.offset_changed.emit(1)
+            self.offset_changed.emit(Direction(1))
         elif event.key() == Qt.Key.Key_Minus:
-            self.offset_changed.emit(-1)
+            self.offset_changed.emit(Direction(-1))
 
         return super().keyPressEvent(event)
 

@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 from pathlib import Path
 from typing import List, Optional, Tuple
-from frame_comparison_tool.utils import put_bordered_text, Align, FrameType
+from frame_comparison_tool.utils import put_bordered_text, Align, FrameType, Direction
 from frame_comparison_tool.utils.exceptions import NoMatchingFrameTypeError, ImageReadError, VideoCaptureFailed, \
-    FramePositionError, InvalidOffsetError
+    FramePositionError, InvalidDirectionError
 from frame_comparison_tool.utils.frame_data import FrameData
 
 
@@ -99,37 +99,37 @@ class FrameLoader:
                                   origin=(frame.shape[1], 0), align=Align.RIGHT)
         return frame
 
-    # TODO: Change this to receive direction as argument
-    def _find_closest_frame(self, frame_pos: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
+    def _find_closest_frame(self, frame_position: int, direction: Direction, frame_type: FrameType) \
+            -> Tuple[int, np.ndarray]:
         """
         Returns closest frame of specific frame type, starting from given position.
 
         Searches for matching frame by increasing the given frame position.
 
-        :param frame_pos: Starting frame position to search from.
+        :param frame_position: Starting frame position to search from.
         :param frame_type: Desired frame type.
         :return: Tuple containing the position of the found frame and the frame itself.
         :raises ``NoMatchingFrameTypeError``: If no frame of matching type was found.
         """
-        self._set_frame_pos(frame_pos)
+        self._set_frame_pos(frame_position)
 
-        while frame_pos < self.total_frames:
+        while frame_position < self.total_frames:
             curr_frame_type = self._get_frame_type()
             curr_frame = self._get_frame()
 
             if curr_frame_type == frame_type:
-                return frame_pos, curr_frame
+                return frame_position, curr_frame
             else:
-                frame_pos += 1
+                frame_position += direction
 
         raise NoMatchingFrameTypeError(frame_type.value)
 
-    def offset(self, frame_idx: int, direction: int) -> None:
+    def offset(self, frame_idx: int, direction: Direction) -> None:
         """
         Retrieves a new frame based on the current frame position, direction, and desired frame type.
 
         :param frame_idx: Current frame index.
-        :param direction: The moving direction (-1 for backward, 1 for forward).
+        :param direction: Enum representing the moving direction.
         :return: A tuple containing the new frame's position and the frame itself.
         :raises ``InvalidOffsetError``: If the passed direction is zero.
         """
@@ -137,13 +137,15 @@ class FrameLoader:
         starting_position: int = self.frame_data[frame_idx].real_frame_position + direction
         frame_type: FrameType = self.frame_data[frame_idx].frame_type
 
-        if direction == 1:
-            real_frame_position, frame = self._get_next_frame(frame_position=starting_position, frame_type=frame_type)
-        elif direction == -1:
+        if direction == Direction.FORWARD:
+            real_frame_position, frame = self._get_next_frame(frame_position=starting_position,
+                                                              direction=direction,
+                                                              frame_type=frame_type)
+        elif direction == Direction.BACKWARD:
             real_frame_position, frame = self._get_previous_frame(frame_position=starting_position,
                                                                   frame_type=frame_type)
         else:
-            raise InvalidOffsetError(direction)
+            raise InvalidDirectionError(direction)
 
         frame_data = FrameData(original_frame_position=starting_position,
                                real_frame_position=real_frame_position,
@@ -152,14 +154,17 @@ class FrameLoader:
 
         self.frame_data[frame_idx] = frame_data
 
-    def _get_next_frame(self, frame_position: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
-        new_frame_position, image = self._find_closest_frame(frame_position, frame_type)
+    def _get_next_frame(self, frame_position: int, direction: Direction, frame_type: FrameType) \
+            -> Tuple[int, np.ndarray]:
+        new_frame_position, image = self._find_closest_frame(frame_position=frame_position,
+                                                             direction=direction,
+                                                             frame_type=frame_type)
         frame = self._get_composited_image(frame_position=new_frame_position, image=image, frame_type=frame_type)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         return new_frame_position, frame
 
-    # TODO
+    # TODO: Write method
     def _get_previous_frame(self, frame_position: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
         return -1, np.ndarray(-1)
 
@@ -179,6 +184,7 @@ class FrameLoader:
                 continue
 
             real_frame_position, frame = self._get_next_frame(frame_position=original_frame_position,
+                                                              direction=Direction(1),
                                                               frame_type=frame_type)
             frame_data = FrameData(original_frame_position=original_frame_position,
                                    real_frame_position=real_frame_position,
