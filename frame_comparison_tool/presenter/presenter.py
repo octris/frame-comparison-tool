@@ -5,8 +5,8 @@ import numpy as np
 from frame_comparison_tool.model import Model
 from frame_comparison_tool.utils.exceptions import ZeroDimensionError
 from frame_comparison_tool.view import View
-from frame_comparison_tool.utils import DisplayMode, ViewData
-from frame_comparison_tool.utils import FrameType
+from frame_comparison_tool.utils import DisplayMode, ViewData, FrameType, Direction
+
 from PIL import Image
 
 
@@ -85,7 +85,7 @@ class Presenter:
         self.model.resample_frames()
         self.update_display()
 
-    def offset_frame_position(self, direction: int) -> None:
+    def offset_frame_position(self, direction: Direction) -> None:
         """
         Offsets the current frame and updates the display.
 
@@ -105,7 +105,7 @@ class Presenter:
             self.model.resample_frames()
             self.update_display()
 
-    def change_frame(self, direction: int) -> None:
+    def change_frame(self, direction: Direction) -> None:
         """
         Changes the current frame to the ``Model`` object and updates the current display.
 
@@ -115,7 +115,7 @@ class Presenter:
         self.model.curr_frame_idx = max(0, min(self.model.curr_frame_idx, len(self.model.frame_positions) - 1))
         self.update_display()
 
-    def change_source(self, direction: int) -> None:
+    def change_source(self, direction: Direction) -> None:
         """
         Changes the current source to the ``Model`` object.
 

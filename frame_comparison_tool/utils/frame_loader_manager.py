@@ -7,7 +7,7 @@ from sys import maxsize
 import random
 import numpy as np
 
-from frame_comparison_tool.utils import FrameLoader, FrameType
+from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
 
 
 class FrameLoaderManager:
@@ -60,7 +60,7 @@ class FrameLoaderManager:
     def get_frame(self, src_idx: int, frame_idx: int) -> np.ndarray:
         return self.get_source(src_idx).frame_data[frame_idx].frame
 
-    def offset_frame(self, direction: int, src_idx: int, frame_idx: int) -> None:
+    def offset_frame(self, direction: Direction, src_idx: int, frame_idx: int) -> None:
         source = self.get_source(src_idx=src_idx)
         source.offset(frame_idx=frame_idx, direction=direction)
 
