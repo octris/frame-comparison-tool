@@ -24,8 +24,9 @@ class Presenter:
         """
         self.model: Model = model
         """``Model`` instance."""
-        self.model.set_on_frame_sample_callback(self.update_display)
-        self.model.set_on_offset_frame_callback(self.update_display)
+        self.model.set_on_frames_ready_callback(self.update_display)
+        self.model.set_on_task_started_callback(self._start_loading)
+        self.model.set_on_task_finished_callback(self._stop_loading)
 
         self.view: View = view
         """``View`` instance."""
@@ -182,3 +183,9 @@ class Presenter:
         image = Image.fromarray(frame)
         image.thumbnail(max_frame_size)
         return np.array(image)
+
+    def _start_loading(self) -> None:
+        self.view.loading_circle.start()
+
+    def _stop_loading(self) -> None:
+        self.view.loading_circle.stop()

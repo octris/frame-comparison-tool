@@ -10,7 +10,8 @@ from PySide6.QtCore import QThread, Signal
 
 class Worker(QThread):
     on_frames_ready: Signal = Signal()
-    on_offset_done: Signal = Signal()
+    on_task_started: Signal = Signal()
+    on_task_finished: Signal = Signal()
 
     def __init__(self, frame_loader_manager: FrameLoaderManager):
         super().__init__()
@@ -26,12 +27,16 @@ class Worker(QThread):
         while True:
             operation, kwargs = self.queue.get()
 
+            self.on_task_started.emit()
+
             if operation == Operation.SAMPLE:
                 self.frame_loader_manager.resample_all_frames()
-                self.on_frames_ready.emit()
             elif operation == Operation.OFFSET:
-                self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"), src_idx=kwargs.get("src_idx"),
+                self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"),
+                                                       src_idx=kwargs.get("src_idx"),
                                                        frame_idx=kwargs.get("frame_idx"))
-                self.on_offset_done.emit()
             else:
                 raise InvalidOperationError(operation)
+
+            self.on_frames_ready.emit()
+            self.on_task_finished.emit()

@@ -32,11 +32,14 @@ class Model:
         self.worker = Worker(frame_loader_manager=self.frame_loader_manager)
         self.worker.start()
 
-    def set_on_frame_sample_callback(self, on_frame_sample: Callable) -> None:
-        self.worker.on_frames_ready.connect(on_frame_sample)
+    def set_on_frames_ready_callback(self, on_frames_ready: Callable) -> None:
+        self.worker.on_frames_ready.connect(on_frames_ready)
 
-    def set_on_offset_frame_callback(self, on_offset_frame: Callable) -> None:
-        self.worker.on_offset_done.connect(on_offset_frame)
+    def set_on_task_started_callback(self, on_task_started: Callable) -> None:
+        self.worker.on_task_started.connect(on_task_started)
+
+    def set_on_task_finished_callback(self, on_task_finished: Callable) -> None:
+        self.worker.on_task_finished.connect(on_task_finished)
 
     @property
     def n_samples(self) -> int:

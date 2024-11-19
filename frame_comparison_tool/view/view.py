@@ -6,6 +6,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction
 from .pannable_scroll_area import PannableScrollArea
+from .spinning_circle import SpinningCircle
 
 
 class View(QMainWindow):
@@ -56,6 +57,9 @@ class View(QMainWindow):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.central_layout.addWidget(self.scroll_area, stretch=4)
+
+        self.loading_circle = SpinningCircle()
+        self.central_layout.addWidget(self.loading_circle, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.config_widget = QWidget()
         self.config_widget.setStyleSheet('background-color: #F8F8F8')
