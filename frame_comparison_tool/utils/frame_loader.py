@@ -1,5 +1,3 @@
-from tkinter import Frame
-
 import cv2
 import numpy as np
 from pathlib import Path
@@ -113,7 +111,7 @@ class FrameLoader:
         """
         self._set_frame_pos(frame_position)
 
-        while frame_position < self.total_frames:
+        while 0 <= frame_position < self.total_frames:
             curr_frame_type = self._get_frame_type()
             curr_frame = self._get_frame()
 
@@ -121,6 +119,9 @@ class FrameLoader:
                 return frame_position, curr_frame
             else:
                 frame_position += direction
+
+            if direction == Direction.BACKWARD and frame_position >= 0:
+                self._set_frame_pos(frame_position)
 
         raise NoMatchingFrameTypeError(frame_type.value)
 
@@ -137,13 +138,10 @@ class FrameLoader:
         starting_position: int = self.frame_data[frame_idx].real_frame_position + direction
         frame_type: FrameType = self.frame_data[frame_idx].frame_type
 
-        if direction == Direction.FORWARD:
+        if direction == Direction.FORWARD or direction == Direction.BACKWARD:
             real_frame_position, frame = self._get_next_frame(frame_position=starting_position,
                                                               direction=direction,
                                                               frame_type=frame_type)
-        elif direction == Direction.BACKWARD:
-            real_frame_position, frame = self._get_previous_frame(frame_position=starting_position,
-                                                                  frame_type=frame_type)
         else:
             raise InvalidDirectionError(direction)
 
@@ -163,10 +161,6 @@ class FrameLoader:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
         return new_frame_position, frame
-
-    # TODO: Write method
-    def _get_previous_frame(self, frame_position: int, frame_type: FrameType) -> Tuple[int, np.ndarray]:
-        return -1, np.ndarray(-1)
 
     def sample_frames(self, frame_positions: List[int], frame_type: FrameType) -> None:
         """
