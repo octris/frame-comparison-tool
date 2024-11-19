@@ -112,5 +112,7 @@ class Model:
 
         :param direction: -1 for backward, 1 for forward.
         """
-        self.frame_loader_manager.offset_frame(direction=direction, src_idx=self.curr_src_idx,
-                                               frame_idx=self.curr_frame_idx)
+        self.worker.add_task(Operation.OFFSET,
+                             direction=direction,
+                             src_idx=self.curr_src_idx,
+                             frame_idx=self.curr_frame_idx)
