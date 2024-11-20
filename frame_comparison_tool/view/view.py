@@ -7,6 +7,7 @@ from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction
 from .pannable_scroll_area import PannableScrollArea
 from .spinning_circle import SpinningCircle
+from .styles import *
 
 
 class View(QMainWindow):
@@ -46,9 +47,12 @@ class View(QMainWindow):
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
         self.central_layout = QVBoxLayout(self.central_widget)
+        self.central_layout.setSpacing(10)
+        self.central_layout.setContentsMargins(10, 10, 10, 10)
+        self.central_layout.setSpacing(4)
 
         self.frame_widget = QLabel()
-        self.frame_widget.setStyleSheet('background-color: white')
+        self.frame_widget.setStyleSheet(FRAME_STYLE)
         self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -56,21 +60,29 @@ class View(QMainWindow):
         self.scroll_area.setWidget(self.frame_widget)
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.central_layout.addWidget(self.scroll_area, stretch=4)
+        self.scroll_area.setMinimumHeight(300)
+        self.scroll_area.setStyleSheet(SCROLL_AREA_STYLE)
+        self.central_layout.addWidget(self.scroll_area, stretch=6)
 
         self.loading_circle = SpinningCircle()
         self.central_layout.addWidget(self.loading_circle, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.config_widget = QWidget()
-        self.config_widget.setStyleSheet('background-color: #F8F8F8')
+        self.config_widget.setStyleSheet(CONFIG_AREA_STYLE)
         self.config_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.central_layout.addWidget(self.config_widget, stretch=1)
+        self.central_layout.addWidget(self.config_widget, stretch=0)
 
         self.config_layout = QHBoxLayout(self.config_widget)
+        self.config_layout.setSpacing(8)
+        self.config_layout.setContentsMargins(10, 10, 10, 10)
+        self.config_layout.addStretch()
 
         self.spin_box = QSpinBox()
         self.spin_box.setRange(0, 10000)
         self.spin_box.valueChanged.connect(self._on_seed_changed)
+        self.spin_box.setFixedWidth(100)
+        # self.spin_box.setStyleSheet(SPIN_BOX_STYLE)
+        self.spin_box.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.spin_box)
 
         self.frame_type_dropdown = QComboBox(self.config_widget)
@@ -83,17 +95,23 @@ class View(QMainWindow):
         ])
         self.frame_type_dropdown.currentTextChanged.connect(self._on_frame_type_changed)
         self.frame_type_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # self.frame_type_dropdown.setStyleSheet(DROPDOWN_STYLE)
+        self.frame_type_dropdown.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.frame_type_dropdown)
 
         self.mode_dropdown = QComboBox(self.config_widget)
         self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
         self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # self.mode_dropdown.setStyleSheet(DROPDOWN_STYLE)
+        self.mode_dropdown.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.mode_dropdown)
 
-        self.add_source_button = QPushButton('Add Source', self.config_widget)
+        self.add_source_button = QPushButton('Add', self.config_widget)
         self.add_source_button.clicked.connect(self._on_add_source_clicked)
         self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.add_source_button.setFixedWidth(70)
+        self.add_source_button.setStyleSheet(ADD_BUTTON_STYLE)
         self.config_layout.addWidget(self.add_source_button)
 
         self.added_sources_widgets: List[QWidget] = []
@@ -188,9 +206,27 @@ class View(QMainWindow):
         :param file_path: String path to the video source.
         """
         main_widget = QWidget()
+        main_widget.setFixedHeight(40)
+        main_widget.setStyleSheet(SOURCE_WIDGET)
+
         widget_layout = QHBoxLayout(main_widget)
+        widget_layout.setContentsMargins(8, 2, 8, 2)
+        widget_layout.setSpacing(4)
+
+        icon_label = QLabel()
+        icon_label.setFixedSize(24, 24)
+        icon_label.setStyleSheet(FILE_ICON_LABEL_STYLE)
+        icon_label.setText("📁")
+        icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        widget_layout.addWidget(icon_label)
+
         source_label = QLabel(file_path)
+        source_label.setStyleSheet(SOURCE_LABEL_STYLE)
+
         delete_button = QPushButton('Delete')
+        delete_button.setFixedWidth(70)  # Fixed width for consistency
+        delete_button.setCursor(Qt.CursorShape.PointingHandCursor)  # Change cursor on hover
+        delete_button.setStyleSheet(DELETE_BUTTON_STYLE)
         delete_button.clicked.connect(lambda: self._on_delete_clicked(file_path))
 
         main_widget.setLayout(widget_layout)
@@ -258,7 +294,10 @@ class View(QMainWindow):
             image = QImage(view_data.frame.data, width, height, bytes_per_line, QImage.Format.Format_RGB888)
             pixmap = QPixmap.fromImage(image)
 
+            self.frame_widget.setMinimumSize(pixmap.size())
+            self.frame_widget.setFixedSize(pixmap.size())
             self.frame_widget.setPixmap(pixmap)
+
             self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setFocus()
 
@@ -268,7 +307,9 @@ class View(QMainWindow):
 
         :return: Tuple containing the width and height of the scroll area.
         """
-        width = self.scroll_area.size().width()
-        height = self.scroll_area.size().height()
+
+        viewport = self.scroll_area.viewport()
+        width = viewport.width()
+        height = viewport.height()
 
         return width, height
