@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Tuple, List, Optional
 
 import numpy as np
@@ -50,23 +51,24 @@ class Presenter:
         self.view.frame_type_changed.connect(self.change_frame_type)
         self.view.offset_changed.connect(self.offset_frame_position)
         self.view.seed_changed.connect(self.change_seed)
+        self.view.n_samples_changed.connect(self.change_n_samples)
         self.view.shown.connect(self.resize_frame)
 
-    def add_source(self, file_paths: List[str]) -> None:
+    def add_source(self, file_paths: List[Path]) -> None:
         """
         Adds source and updates display.
 
         :param file_paths: Paths to video source.
         """
 
-        added_file_paths: List[Optional[str]] = self.model.add_source(file_paths=file_paths)
+        added_file_paths: List[Optional[Path]] = self.model.add_source(file_paths=file_paths)
 
         if added_file_paths:
             for file_path in added_file_paths:
                 self.view.on_add_source(file_path=file_path)
             self.update_display()
 
-    def delete_source(self, file_path: str) -> None:
+    def delete_source(self, file_path: Path) -> None:
         """
         Deletes source and updates display.
 
@@ -76,7 +78,12 @@ class Presenter:
         self.view.on_delete_source(src_idx)
         self.update_display()
 
-    def change_seed(self, seed: int):
+    def change_n_samples(self, n_samples: int) -> None:
+        self.model.update_n_samples(n_samples)
+        self.model.resample_frames()
+        self.update_display()
+
+    def change_seed(self, seed: int) -> None:
         """
         Changes random seed and updates display with resampled frames.
 

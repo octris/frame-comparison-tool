@@ -7,12 +7,12 @@ from sys import maxsize
 import random
 import numpy as np
 
-from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
+from frame_comparison_tool.utils import FrameLoader, FrameType, Direction, check_path
 
 
 class FrameLoaderManager:
-    def __init__(self, files: Optional[List[str]], n_samples: int, seed: int, frame_type: FrameType):
-        self.sources: OrderedDict[str, FrameLoader] = OrderedDict({})
+    def __init__(self, files: Optional[List[Path]], n_samples: int, seed: int, frame_type: FrameType):
+        self.sources: OrderedDict[Path, FrameLoader] = OrderedDict({})
         """Dictionary mapping file path to ``FrameLoader`` object."""
         self.n_samples: int = n_samples
         """Number of frame samples."""
@@ -25,26 +25,28 @@ class FrameLoaderManager:
 
         self.add_source(files)
 
+    def update_n_samples(self, n_samples: int) -> None:
+        self.n_samples = n_samples
+
     def update_seed(self, seed: int) -> None:
         self.seed = seed
-        self.frame_positions.clear()
 
-    def add_source(self, file_paths: List[Optional[str]]) -> List[Optional[str]]:
+    def add_source(self, file_paths: List[Optional[Path]]) -> List[Optional[Path]]:
         added_file_paths: List[Optional[str]] = []
 
         if file_paths:
             for file_path in file_paths:
-                if file_path not in self.sources.keys():
+                if check_path(file_path) and file_path not in self.sources.keys():
                     frame_loader = FrameLoader(file_path=Path(file_path))
                     self.sources[file_path] = frame_loader
                     added_file_paths.append(file_path)
 
             if added_file_paths:
-                self.sample_frames(frame_loaders=list(self.sources.values()))
+                self.resample_all_frames()
 
         return added_file_paths
 
-    def delete_source(self, file_path: str) -> int:
+    def delete_source(self, file_path: Path) -> int:
         src_idx = list(self.sources.keys()).index(file_path)
         del self.sources[file_path]
 
@@ -60,9 +62,17 @@ class FrameLoaderManager:
         source = self.get_source(src_idx=src_idx)
         source.offset(frame_idx=frame_idx, direction=direction)
 
+    def clear_frame_positions(self) -> None:
+        self.frame_positions.clear()
+
     def resample_all_frames(self) -> None:
+        if self.frame_positions:
+            self.frame_positions.clear()
+        self.sample_all_frames()
+
+    def sample_all_frames(self) -> None:
         if self.sources:
-            self.sample_frames(list(self.sources.values()))
+            self._sample_frames(list(self.sources.values()))
 
     def _generate_random_frame_positions(self, min_frame_pos: int, max_frame_pos: int, n_samples: int) -> List[int]:
         random.seed(self.seed)
@@ -70,7 +80,7 @@ class FrameLoaderManager:
 
         return frame_positions
 
-    def sample_frames(self, frame_loaders: List[FrameLoader]) -> None:
+    def _sample_frames(self, frame_loaders: List[FrameLoader]) -> None:
         if (min_total_frames := min([frame_loader.total_frames for frame_loader in frame_loaders])) < max(
                 self.frame_positions, default=maxsize):
             idx = bisect_right(self.frame_positions, min_total_frames)

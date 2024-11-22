@@ -1,10 +1,11 @@
+from pathlib import Path
 from typing import override, List, Optional, Tuple
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QSpinBox
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
-from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction
+from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction, check_path
 from .pannable_scroll_area import PannableScrollArea
 from .spinning_circle import SpinningCircle
 from .styles import *
@@ -16,7 +17,7 @@ class View(QMainWindow):
     """
 
     add_source_requested = Signal(list)
-    delete_source_requested = Signal(str)
+    delete_source_requested = Signal(Path)
     mode_changed = Signal(DisplayMode)
     frame_changed = Signal(Direction)
     source_changed = Signal(Direction)
@@ -24,6 +25,7 @@ class View(QMainWindow):
     frame_type_changed = Signal(FrameType)
     offset_changed = Signal(Direction)
     seed_changed = Signal(int)
+    n_samples_changed = Signal(int)
     shown = Signal(tuple)
 
     def __init__(self):
@@ -77,13 +79,21 @@ class View(QMainWindow):
         self.config_layout.setContentsMargins(10, 10, 10, 10)
         self.config_layout.addStretch()
 
-        self.spin_box = QSpinBox()
-        self.spin_box.setRange(0, 10000)
-        self.spin_box.valueChanged.connect(self._on_seed_changed)
-        self.spin_box.setFixedWidth(100)
+        self.spin_box_n_samples = QSpinBox()
+        self.spin_box_n_samples.setValue(5)
+        self.spin_box_n_samples.valueChanged.connect(self._on_n_samples_changed)
+        self.spin_box_n_samples.setFixedWidth(100)
+        self.spin_box_n_samples.wheelEvent = lambda event: None
+        self.config_layout.addWidget(self.spin_box_n_samples)
+
+        self.spin_box_seed = QSpinBox()
+        self.spin_box_seed.setRange(0, 10000)
+        self.spin_box_seed.setValue(42)
+        self.spin_box_seed.valueChanged.connect(self._on_seed_changed)
+        self.spin_box_seed.setFixedWidth(100)
         # self.spin_box.setStyleSheet(SPIN_BOX_STYLE)
-        self.spin_box.wheelEvent = lambda event: None
-        self.config_layout.addWidget(self.spin_box)
+        self.spin_box_seed.wheelEvent = lambda event: None
+        self.config_layout.addWidget(self.spin_box_seed)
 
         self.frame_type_dropdown = QComboBox(self.config_widget)
         # noinspection PyTypeChecker
@@ -120,7 +130,7 @@ class View(QMainWindow):
         self.setFocus()
 
     def set_init_values(self, files: Optional[str], seed: int, frame_type: FrameType, display_mode: DisplayMode):
-        self.spin_box.setValue(seed)
+        self.spin_box_seed.setValue(seed)
         self.frame_type_dropdown.setCurrentIndex(list(FrameType).index(frame_type))
         self.mode_dropdown.setCurrentIndex(list(DisplayMode).index(display_mode))
 
@@ -195,11 +205,12 @@ class View(QMainWindow):
         """
         Emits a signal when the user adds a new video source.
         """
-        file_path, _ = QFileDialog.getOpenFileName(self)
-        if file_path:
+        file_path_str, _ = QFileDialog.getOpenFileName(self)
+        if file_path_str and check_path(file_path_str=file_path_str):
+            file_path = Path(file_path_str).resolve(strict=True)
             self.add_source_requested.emit([file_path])
 
-    def on_add_source(self, file_path: str) -> None:
+    def on_add_source(self, file_path: Path) -> None:
         """
         Adds new source to the UI.
 
@@ -220,7 +231,7 @@ class View(QMainWindow):
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         widget_layout.addWidget(icon_label)
 
-        source_label = QLabel(file_path)
+        source_label = QLabel(str(file_path))
         source_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
         delete_button = QPushButton('Delete')
@@ -252,13 +263,16 @@ class View(QMainWindow):
         self.central_layout.update()
         self.update()
 
+    def _on_n_samples_changed(self) -> None:
+        self.n_samples_changed.emit(self.spin_box_n_samples.value())
+
     def _on_seed_changed(self) -> None:
         """
         Emits a signal when the user changes the random seed.
         """
-        self.seed_changed.emit(self.spin_box.value())
+        self.seed_changed.emit(self.spin_box_seed.value())
 
-    def _on_delete_clicked(self, file_path: str) -> None:
+    def _on_delete_clicked(self, file_path: Path) -> None:
         """
         Emits a signal when the user deletes a source.
 

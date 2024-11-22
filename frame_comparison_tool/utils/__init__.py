@@ -6,3 +6,4 @@ from .display_mode import DisplayMode
 from .view_data import ViewData
 from .argument_parser import parse_arguments
 from .operation import Operation
+from .path_check import check_path

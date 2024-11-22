@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 from typing import List, Tuple, Optional, OrderedDict, Callable
 
@@ -11,7 +13,7 @@ class Model:
     The model class, responsible for backend logic regarding storing and manipulating data.
     """
 
-    def __init__(self, files: Optional[List[str]], n_samples: int, seed: int,
+    def __init__(self, files: Optional[List[Path]], n_samples: int, seed: int,
                  frame_type: FrameType):
         """
         Initializes a ``Model`` instance.
@@ -50,7 +52,7 @@ class Model:
         return self.frame_loader_manager.frame_positions
 
     @property
-    def sources(self) -> OrderedDict[str, FrameLoader]:
+    def sources(self) -> OrderedDict[Path, FrameLoader]:
         return self.frame_loader_manager.sources
 
     @property
@@ -64,6 +66,10 @@ class Model:
     @property
     def frame_type(self) -> FrameType:
         return self.frame_loader_manager.frame_type
+
+    def update_n_samples(self, n_samples: int) -> None:
+        if n_samples != self.n_samples:
+            self.frame_loader_manager.update_n_samples(n_samples)
 
     def update_seed(self, seed: int) -> None:
         if seed != self.seed:
@@ -80,7 +86,7 @@ class Model:
         """
         return self.frame_loader_manager.get_frame(src_idx=self.curr_src_idx, frame_idx=self.curr_frame_idx)
 
-    def add_source(self, file_paths: List[str]) -> List[Optional[str]]:
+    def add_source(self, file_paths: List[Path]) -> List[Optional[Path]]:
         """
         Adds video source to the model.
 
@@ -89,7 +95,7 @@ class Model:
         """
         return self.frame_loader_manager.add_source(file_paths=file_paths)
 
-    def delete_source(self, file_path: str) -> int:
+    def delete_source(self, file_path: Path) -> int:
         """
         Deletes video source from the model.
 
