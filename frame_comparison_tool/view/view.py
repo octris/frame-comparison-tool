@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QH
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction, check_path
+from .eliding_label import ElidingLabel
 from .pannable_scroll_area import PannableScrollArea
 from .spinning_circle import SpinningCircle
 from .styles import *
@@ -247,8 +248,7 @@ class View(QMainWindow):
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         widget_layout.addWidget(icon_label)
 
-        # TODO: Make as an Elided Label
-        source_label = QLabel(str(file_path))
+        source_label = ElidingLabel(str(file_path))
         source_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
         delete_button = QPushButton('Delete')
