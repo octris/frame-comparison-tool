@@ -3,6 +3,7 @@ from argparse import Namespace, ArgumentParser
 from pathlib import Path
 from typing import List
 
+from frame_comparison_tool.utils import check_path
 from frame_comparison_tool.utils.frame_type import FrameType
 
 
@@ -20,7 +21,7 @@ def parse_arguments() -> Namespace:
 
     if args.files:
         for file_path in args.files:
-            if not file_path.resolve().exists():
+            if not check_path(file_path=file_path):
                 invalid_paths.append(str(file_path))
 
     if invalid_paths:

@@ -2,13 +2,14 @@ from pathlib import Path
 from typing import override, List, Optional, Tuple
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
-    QLabel, QFileDialog, QSpinBox
+    QLabel, QFileDialog, QSpinBox, QMessageBox
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction, check_path
 from .pannable_scroll_area import PannableScrollArea
 from .spinning_circle import SpinningCircle
 from .styles import *
+from ..utils.extension_filters import FILTERS
 
 
 class View(QMainWindow):
@@ -129,7 +130,7 @@ class View(QMainWindow):
         self.setLayout(self.central_layout)
         self.setFocus()
 
-    def set_init_values(self, files: Optional[str], seed: int, frame_type: FrameType, display_mode: DisplayMode):
+    def set_init_values(self, files: Optional[List[Path]], seed: int, frame_type: FrameType, display_mode: DisplayMode):
         self.spin_box_seed.setValue(seed)
         self.frame_type_dropdown.setCurrentIndex(list(FrameType).index(frame_type))
         self.mode_dropdown.setCurrentIndex(list(DisplayMode).index(display_mode))
@@ -205,10 +206,25 @@ class View(QMainWindow):
         """
         Emits a signal when the user adds a new video source.
         """
-        file_path_str, _ = QFileDialog.getOpenFileName(self)
-        if file_path_str and check_path(file_path_str=file_path_str):
-            file_path = Path(file_path_str).resolve(strict=True)
-            self.add_source_requested.emit([file_path])
+        file_dialog = QFileDialog(self)
+        file_dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
+        file_dialog.setNameFilters(FILTERS)
+
+        if file_dialog.exec():
+            files: List[str] = file_dialog.selectedFiles()
+
+            if files:
+                for file_path_str in files:
+                    file_path = Path(file_path_str)
+
+                    if check_path(file_path=file_path):
+                        self.add_source_requested.emit([file_path])
+                    else:
+                        error_msg = QMessageBox(self)
+                        error_msg.setWindowTitle(" ")
+                        error_msg.setText("File does not exist.")
+                        error_msg.setIcon(QMessageBox.Icon.Warning)
+                        error_msg.exec()
 
     def on_add_source(self, file_path: Path) -> None:
         """
@@ -231,6 +247,7 @@ class View(QMainWindow):
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         widget_layout.addWidget(icon_label)
 
+        # TODO: Make as an Elided Label
         source_label = QLabel(str(file_path))
         source_label.setStyleSheet(SOURCE_LABEL_STYLE)
 

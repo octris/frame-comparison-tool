@@ -7,7 +7,7 @@ from sys import maxsize
 import random
 import numpy as np
 
-from frame_comparison_tool.utils import FrameLoader, FrameType, Direction, check_path
+from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
 
 
 class FrameLoaderManager:
@@ -36,7 +36,7 @@ class FrameLoaderManager:
 
         if file_paths:
             for file_path in file_paths:
-                if check_path(file_path) and file_path not in self.sources.keys():
+                if file_path not in self.sources.keys():
                     frame_loader = FrameLoader(file_path=Path(file_path))
                     self.sources[file_path] = frame_loader
                     added_file_paths.append(file_path)

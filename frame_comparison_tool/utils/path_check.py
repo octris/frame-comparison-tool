@@ -1,9 +1,10 @@
 from pathlib import Path
+from .extension_filters import VIDEO_EXTENSIONS
 
 
-def check_path(file_path_str: str) -> bool:
-    try:
-        Path(file_path_str).resolve(strict=True)
-        return True
-    except (RuntimeError, FileNotFoundError):
-        return False
+def check_path(file_path: Path) -> bool:
+    return file_path.exists() and file_path.is_file() and _is_valid_extension(file_path)
+
+
+def _is_valid_extension(file_path: Path) -> bool:
+    return file_path.suffix in VIDEO_EXTENSIONS
