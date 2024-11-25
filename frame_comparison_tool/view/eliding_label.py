@@ -2,7 +2,7 @@ from typing import override
 
 from PySide6.QtWidgets import QLabel, QStyleOptionFrame, QStyle
 from PySide6.QtGui import QPainter
-from PySide6.QtCore import Qt, QSize, QMargins
+from PySide6.QtCore import Qt, QSize
 
 
 class ElidingLabel(QLabel):

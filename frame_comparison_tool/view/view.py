@@ -66,6 +66,7 @@ class View(QMainWindow):
         self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.scroll_area.setMinimumHeight(300)
         self.scroll_area.setStyleSheet(SCROLL_AREA_STYLE)
+        self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.central_layout.addWidget(self.scroll_area, stretch=6)
 
         self.loading_circle = SpinningCircle()
