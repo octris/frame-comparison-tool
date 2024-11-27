@@ -87,34 +87,15 @@ DELETE_BUTTON_STYLE = '''
     }
 '''
 
-COMMON_INPUT_STYLE = """
-    QSpinBox, QComboBox {
+SPIN_BOX_STYLE = """
+    QSpinBox {
         background-color: white;
         color: #333333;
-        border: 1px solid #E0E0E0;
-        border-radius: 4px;
         padding: 2px 4px;
     }
 
-    QSpinBox:hover, QComboBox:hover {
-        border: 1px solid #007AFF;
-    }
-
-    QSpinBox:focus, QComboBox:focus {
-        border: 1px solid #007AFF;
-    }
-"""
-
-SPIN_BOX_STYLE = COMMON_INPUT_STYLE + """
     QSpinBox::up-button, QSpinBox::down-button {
-        background-color: #F8F8F8;
-        border: none;
-        width: 16px;
         border-left: 1px solid #E0E0E0;
-    }
-
-    QSpinBox::up-button:hover, QSpinBox::down-button:hover {
-        background-color: #F0F0F0;
     }
 
     QSpinBox::up-button {
@@ -126,7 +107,23 @@ SPIN_BOX_STYLE = COMMON_INPUT_STYLE + """
     }
 """
 
-DROPDOWN_STYLE = COMMON_INPUT_STYLE + """
+DROPDOWN_STYLE = """
+    QComboBox {
+        background-color: white;
+        color: #333333;
+        border: 1px solid #E0E0E0;
+        border-radius: 4px;
+        padding: 2px 4px;
+    }
+
+    QComboBox:hover {
+        border: 1px solid #007AFF;
+    }
+
+    QComboBox:focus {
+        border: 1px solid #007AFF;
+    }
+
     QComboBox::drop-down {
         border: none;
         width: 20px;
