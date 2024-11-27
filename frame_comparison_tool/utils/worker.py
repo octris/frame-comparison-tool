@@ -29,8 +29,11 @@ class Worker(QThread):
 
             self.on_task_started.emit()
 
-            if operation == Operation.SAMPLE:
-                self.frame_loader_manager.resample_all_frames()
+            if operation == Operation.RESAMPLE:
+                self.frame_loader_manager.clear_frame_positions()
+                self.frame_loader_manager.sample_all_frames()
+            elif operation == Operation.SAMPLE:
+                self.frame_loader_manager.sample_all_frames()
             elif operation == Operation.OFFSET:
                 self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"),
                                                        src_idx=kwargs.get("src_idx"),

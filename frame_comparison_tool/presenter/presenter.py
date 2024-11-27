@@ -61,7 +61,7 @@ class Presenter:
         :param file_paths: Paths to video source.
         """
 
-        added_file_paths: List[Optional[Path]] = self.model.add_source(file_paths=file_paths)
+        added_file_paths: List[Optional[Path]] = self.model.add_sources(file_paths=file_paths)
 
         if added_file_paths:
             for file_path in added_file_paths:
@@ -162,15 +162,12 @@ class Presenter:
         mode: DisplayMode = self.model.curr_mode
         view_data: ViewData
 
-        if self.model.source_count == 0:
-            view_data = ViewData(frame=None, mode=mode)
-        else:
-            frame = self.model.get_current_frame()
+        frame = self.model.get_current_frame()
 
-            if mode == DisplayMode.SCALED:
-                frame = self._resize_frame_to_fit(frame)
+        if frame is not None and mode == DisplayMode.SCALED:
+            frame = self._resize_frame_to_fit(frame)
 
-            view_data = ViewData(frame=frame, mode=mode)
+        view_data = ViewData(frame=frame, mode=mode)
 
         self.view.update_display(view_data)
 

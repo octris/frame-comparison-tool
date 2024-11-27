@@ -23,8 +23,6 @@ class FrameLoaderManager:
         self.frame_type: FrameType = frame_type
         """Current frame type."""
 
-        self.add_source(files)
-
     def update_n_samples(self, n_samples: int) -> None:
         self.n_samples = n_samples
 
@@ -41,9 +39,6 @@ class FrameLoaderManager:
                     self.sources[file_path] = frame_loader
                     added_file_paths.append(file_path)
 
-            if added_file_paths:
-                self.resample_all_frames()
-
         return added_file_paths
 
     def delete_source(self, file_path: Path) -> int:
@@ -55,20 +50,24 @@ class FrameLoaderManager:
     def get_source(self, src_idx: int) -> FrameLoader:
         return list(self.sources.values())[src_idx]
 
-    def get_frame(self, src_idx: int, frame_idx: int) -> np.ndarray:
-        return self.get_source(src_idx).frame_data[frame_idx].frame
+    def get_frame(self, src_idx: int, frame_idx: int) -> Optional[np.ndarray]:
+        if src_idx < len(self.sources):
+            source = self.get_source(src_idx)
+
+            if frame_idx < len(source.frame_data):
+                return source.frame_data[frame_idx].frame
+            else:
+                return None
+        else:
+            return None
 
     def offset_frame(self, direction: Direction, src_idx: int, frame_idx: int) -> None:
         source = self.get_source(src_idx=src_idx)
         source.offset(frame_idx=frame_idx, direction=direction)
 
     def clear_frame_positions(self) -> None:
-        self.frame_positions.clear()
-
-    def resample_all_frames(self) -> None:
         if self.frame_positions:
             self.frame_positions.clear()
-        self.sample_all_frames()
 
     def sample_all_frames(self) -> None:
         if self.sources:

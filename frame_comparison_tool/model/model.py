@@ -34,6 +34,9 @@ class Model:
         self.worker = Worker(frame_loader_manager=self.frame_loader_manager)
         self.worker.start()
 
+        if files:
+            self.add_sources(file_paths=files)
+
     def set_on_frames_ready_callback(self, on_frames_ready: Callable) -> None:
         self.worker.on_frames_ready.connect(on_frames_ready)
 
@@ -78,7 +81,7 @@ class Model:
     def set_frame_type(self, frame_type: FrameType) -> None:
         self.frame_loader_manager.frame_type = frame_type
 
-    def get_current_frame(self) -> np.ndarray:
+    def get_current_frame(self) -> Optional[np.ndarray]:
         """
         Retrieves current frame of current video source.
 
@@ -86,14 +89,16 @@ class Model:
         """
         return self.frame_loader_manager.get_frame(src_idx=self.curr_src_idx, frame_idx=self.curr_frame_idx)
 
-    def add_source(self, file_paths: List[Path]) -> List[Optional[Path]]:
+    def add_sources(self, file_paths: List[Path]) -> List[Optional[Path]]:
         """
         Adds video source to the model.
 
         :param file_paths: Video source string.
         :return: ``True`` if source was successfully added, ``False`` if source already exists.
         """
-        return self.frame_loader_manager.add_source(file_paths=file_paths)
+        added_sources = self.frame_loader_manager.add_source(file_paths=file_paths)
+        self.worker.add_task(Operation.SAMPLE)
+        return added_sources
 
     def delete_source(self, file_path: Path) -> int:
         """
@@ -113,7 +118,7 @@ class Model:
         return src_idx
 
     def resample_frames(self) -> None:
-        self.worker.add_task(Operation.SAMPLE)
+        self.worker.add_task(Operation.RESAMPLE)
 
     def offset_frame(self, direction: Direction) -> None:
         """

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import override, List, Optional, Tuple
+from typing import override, List, Optional, Tuple, Set
 
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QSpinBox, QMessageBox
@@ -86,6 +86,7 @@ class View(QMainWindow):
         self.spin_box_n_samples.setValue(5)
         self.spin_box_n_samples.valueChanged.connect(self._on_n_samples_changed)
         self.spin_box_n_samples.setFixedWidth(100)
+        self.spin_box_n_samples.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_n_samples.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.spin_box_n_samples)
 
@@ -94,7 +95,7 @@ class View(QMainWindow):
         self.spin_box_seed.setValue(42)
         self.spin_box_seed.valueChanged.connect(self._on_seed_changed)
         self.spin_box_seed.setFixedWidth(100)
-        # self.spin_box.setStyleSheet(SPIN_BOX_STYLE)
+        self.spin_box_seed.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_seed.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.spin_box_seed)
 
@@ -108,7 +109,7 @@ class View(QMainWindow):
         ])
         self.frame_type_dropdown.currentTextChanged.connect(self._on_frame_type_changed)
         self.frame_type_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.frame_type_dropdown.setStyleSheet(DROPDOWN_STYLE)
+        self.frame_type_dropdown.setStyleSheet(DROPDOWN_STYLE)
         self.frame_type_dropdown.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.frame_type_dropdown)
 
@@ -116,7 +117,7 @@ class View(QMainWindow):
         self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
         self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.mode_dropdown.setStyleSheet(DROPDOWN_STYLE)
+        self.mode_dropdown.setStyleSheet(DROPDOWN_STYLE)
         self.mode_dropdown.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.mode_dropdown)
 
@@ -126,7 +127,6 @@ class View(QMainWindow):
         self.add_source_button.setFixedWidth(70)
         self.add_source_button.setStyleSheet(ADD_BUTTON_STYLE)
         self.config_layout.addWidget(self.add_source_button)
-
         self.added_sources_widgets: List[QWidget] = []
 
         self.setLayout(self.central_layout)
@@ -213,20 +213,21 @@ class View(QMainWindow):
         file_dialog.setNameFilters(FILTERS)
 
         if file_dialog.exec():
-            files: List[str] = file_dialog.selectedFiles()
-
+            files: Set[Path] = set(map(Path, file_dialog.selectedFiles()))
             if files:
-                for file_path_str in files:
-                    file_path = Path(file_path_str)
+                valid_paths: Set[Path] = set(filter(check_path, files))
+                invalid_paths: Set[Path] = files - valid_paths
 
-                    if check_path(file_path=file_path):
-                        self.add_source_requested.emit([file_path])
-                    else:
-                        error_msg = QMessageBox(self)
-                        error_msg.setWindowTitle(" ")
-                        error_msg.setText("File does not exist.")
-                        error_msg.setIcon(QMessageBox.Icon.Warning)
-                        error_msg.exec()
+                if valid_paths:
+                    self.add_source_requested.emit(list(valid_paths))
+
+                if invalid_paths:
+                    invalid_paths_str = '\n'.join(str(invalid_path) for invalid_path in invalid_paths)
+                    error_msg = QMessageBox(self)
+                    error_msg.setWindowTitle(" ")
+                    error_msg.setText(f"An error occurred with these files:{invalid_paths_str}")
+                    error_msg.setIcon(QMessageBox.Icon.Warning)
+                    error_msg.exec()
 
     def on_add_source(self, file_path: Path) -> None:
         """

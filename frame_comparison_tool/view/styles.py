@@ -55,63 +55,6 @@ SOURCE_WIDGET = '''
     }
 '''
 
-SPIN_BOX_STYLE = '''
-    QSpinBox {
-        background-color: white;
-        border: 1px solid #C0C0C0;
-        border-radius: 3px;
-        padding: 2px 5px;
-        color: #333333;
-    }
-    QSpinBox:hover {
-        border-color: #808080;
-    }
-    QSpinBox::up-button, QSpinBox::down-button {
-        background-color: #F0F0F0;
-        border: 1px solid #C0C0C0;
-        border-radius: 2px;
-        width: 16px;
-    }
-    QSpinBox::up-button:hover, QSpinBox::down-button:hover {
-        background-color: #E0E0E0;
-    }
-'''
-
-DROPDOWN_STYLE = '''
-    QComboBox {
-        min-width: 120px;
-        max-width: 120px;
-        padding: 5px;
-        border: 1px solid #C0C0C0;
-        border-radius: 3px;
-        background-color: white;
-        color: #333333;
-    }
-    QComboBox:hover {
-        border-color: #808080;
-    }
-    QComboBox::drop-down {
-        border: none;
-        width: 20px;
-    }
-    
-    QComboBox QAbstractItemView {
-        border: 1px solid #C0C0C0;
-        background-color: white;
-        selection-background-color: #E0E0E0;
-        selection-color: #333333;
-        padding: 4px;
-    }
-    QComboBox QAbstractItemView::item {
-        min-height: 24px;
-        padding: 4px;
-    }
-    QComboBox QAbstractItemView::item:hover {
-        background-color: #F0F0F0;
-        color: #333333;
-    }
-'''
-
 ADD_BUTTON_STYLE = '''
     QPushButton {
         background-color: #007AFF;
@@ -143,3 +86,62 @@ DELETE_BUTTON_STYLE = '''
         background-color: #D63964;
     }
 '''
+
+COMMON_INPUT_STYLE = """
+    QSpinBox, QComboBox {
+        background-color: white;
+        color: #333333;
+        border: 1px solid #E0E0E0;
+        border-radius: 4px;
+        padding: 2px 4px;
+    }
+
+    QSpinBox:hover, QComboBox:hover {
+        border: 1px solid #007AFF;
+    }
+
+    QSpinBox:focus, QComboBox:focus {
+        border: 1px solid #007AFF;
+    }
+"""
+
+SPIN_BOX_STYLE = COMMON_INPUT_STYLE + """
+    QSpinBox::up-button, QSpinBox::down-button {
+        background-color: #F8F8F8;
+        border: none;
+        width: 16px;
+        border-left: 1px solid #E0E0E0;
+    }
+
+    QSpinBox::up-button:hover, QSpinBox::down-button:hover {
+        background-color: #F0F0F0;
+    }
+
+    QSpinBox::up-button {
+        border-top-right-radius: 4px;
+    }
+
+    QSpinBox::down-button {
+        border-bottom-right-radius: 4px;
+    }
+"""
+
+DROPDOWN_STYLE = COMMON_INPUT_STYLE + """
+    QComboBox::drop-down {
+        border: none;
+        width: 20px;
+    }
+
+    QComboBox::down-arrow {
+        color: #333333;
+        width: 8px;
+        height: 8px;
+    }
+
+    QComboBox QAbstractItemView {
+        background-color: white;
+        color: #333333;
+        selection-background-color: #E8E8E8;
+        border: 1px solid #E0E0E0;
+    }
+"""
