@@ -162,7 +162,6 @@ class FrameLoader:
 
         return new_frame_position, frame
 
-    # TODO: Fix this
     def sample_frames(self, frame_positions: List[int], frame_type: FrameType) -> None:
         """
         Samples frames based on the given starting frame indices and desired frame type.
@@ -174,6 +173,7 @@ class FrameLoader:
 
         for idx, original_frame_position in enumerate(frame_positions):
             if (self.frame_data
+                    and idx < len(self.frame_data)
                     and self.frame_data[idx].original_frame_position == original_frame_position
                     and self.frame_data[idx].frame_type == frame_type):
                 continue
@@ -190,6 +190,10 @@ class FrameLoader:
 
         if self.frame_data:
             for idx, data in buffer:
-                self.frame_data[idx] = data  # type: ignore
+                # noinspection PyTypeChecker
+                if idx < len(self.frame_data):
+                    self.frame_data[idx] = data  # type: ignore
+                else:
+                    self.frame_data.append(data)
         else:
             self.frame_data.extend(data[1] for data in buffer)

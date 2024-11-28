@@ -79,7 +79,8 @@ class Presenter:
         self.update_display()
 
     def change_n_samples(self, n_samples: int) -> None:
-        self.model.update_n_samples(n_samples)
+        self.model.update_n_samples(n_samples=n_samples)
+        self.model.expand_frames(n_samples=n_samples)
         self.model.resample_frames()
         self.update_display()
 

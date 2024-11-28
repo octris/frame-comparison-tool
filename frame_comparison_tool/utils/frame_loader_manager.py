@@ -61,6 +61,12 @@ class FrameLoaderManager:
         else:
             return None
 
+    def expand_frames(self, n_samples: int):
+        if n_samples > self.n_samples and self.frame_positions:
+            self._generate_random_frame_positions(min_frame_pos=min(self.frame_positions),
+                                                  max_frame_pos=max(self.frame_positions),
+                                                  n_samples=n_samples)
+
     def offset_frame(self, direction: Direction, src_idx: int, frame_idx: int) -> None:
         source = self.get_source(src_idx=src_idx)
         source.offset(frame_idx=frame_idx, direction=direction)
@@ -94,4 +100,7 @@ class FrameLoaderManager:
             self.frame_positions.extend(new_frame_positions)
 
         for frame_loader in frame_loaders:
-            frame_loader.sample_frames(frame_positions=self.frame_positions, frame_type=self.frame_type)
+            frame_loader.sample_frames(
+                frame_positions=self.frame_positions,
+                frame_type=self.frame_type
+            )

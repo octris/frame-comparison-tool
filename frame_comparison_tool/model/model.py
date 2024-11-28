@@ -117,6 +117,9 @@ class Model:
 
         return src_idx
 
+    def expand_frames(self, n_samples: int):
+        self.frame_loader_manager.expand_frames(n_samples=n_samples)
+
     def resample_frames(self) -> None:
         self.worker.add_task(Operation.RESAMPLE)
 
