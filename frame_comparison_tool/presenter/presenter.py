@@ -1,14 +1,13 @@
 from pathlib import Path
-from typing import Tuple, List, Optional
+from typing import Optional
 
 import numpy as np
+from PIL import Image
 
 from frame_comparison_tool.model import Model
+from frame_comparison_tool.utils import DisplayMode, ViewData, FrameType, Direction
 from frame_comparison_tool.utils.exceptions import ZeroDimensionError
 from frame_comparison_tool.view import View
-from frame_comparison_tool.utils import DisplayMode, ViewData, FrameType, Direction
-
-from PIL import Image
 
 
 class Presenter:
@@ -54,18 +53,17 @@ class Presenter:
         self.view.n_samples_changed.connect(self.change_n_samples)
         self.view.shown.connect(self.resize_frame)
 
-    def add_source(self, file_paths: List[Path]) -> None:
+    def add_source(self, file_paths: list[Path]) -> None:
         """
         Adds source and updates display.
 
         :param file_paths: Paths to video source.
         """
 
-        added_file_paths: List[Optional[Path]] = self.model.add_sources(file_paths=file_paths)
+        added_file_paths: list[tuple[Path, bool]] = self.model.add_sources(file_paths=file_paths)
 
         if added_file_paths:
-            for file_path in added_file_paths:
-                self.view.on_add_source(file_path=file_path)
+            self.view.on_add_sources(file_paths=added_file_paths)
             self.update_display()
 
     def delete_source(self, file_path: Path) -> None:
@@ -145,7 +143,7 @@ class Presenter:
             self.model.curr_mode = mode
             self.update_display()
 
-    def resize_frame(self, frame_size: Tuple[int, int]) -> None:
+    def resize_frame(self, frame_size: tuple[int, int]) -> None:
         """
         Resizes frame to a certain frame size and updates the current display.
 
@@ -180,7 +178,7 @@ class Presenter:
         :return: Resized frame.
         :raises ``ZeroDimensionError``: If either width or height of the scroll area is zero.
         """
-        max_frame_size: Tuple[int, int] = self.model.max_frame_size
+        max_frame_size: tuple[int, int] = self.model.max_frame_size
 
         if max_frame_size[0] == 0 or max_frame_size[1] == 0:
             raise ZeroDimensionError()

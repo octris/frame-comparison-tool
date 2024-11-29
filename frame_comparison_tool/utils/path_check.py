@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from .extension_filters import VIDEO_EXTENSIONS
 
 

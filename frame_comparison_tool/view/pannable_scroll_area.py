@@ -1,7 +1,7 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QScrollArea
 from PySide6.QtCore import QPoint
+from PySide6.QtCore import Qt
 from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QScrollArea
 
 
 class PannableScrollArea(QScrollArea):

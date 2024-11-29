@@ -1,10 +1,11 @@
 from pathlib import Path
-from typing import override, List, Optional, Tuple, Set
+from typing import override, Optional
 
+from PySide6.QtCore import Qt, Signal, QTimer
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QSpinBox, QMessageBox
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
+
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction, check_path
 from .eliding_label import ElidingLabel
 from .pannable_scroll_area import PannableScrollArea
@@ -82,6 +83,14 @@ class View(QMainWindow):
         self.config_layout.setContentsMargins(10, 10, 10, 10)
         self.config_layout.addStretch()
 
+        self._seed_timer = QTimer()
+        self._seed_timer.setSingleShot(True)
+        self._seed_timer.timeout.connect(self._emit_seed)
+
+        self._n_samples_timer = QTimer()
+        self._n_samples_timer.setSingleShot(True)
+        self._n_samples_timer.timeout.connect(self._emit_n_samples)
+
         self.spin_box_n_samples = QSpinBox()
         self.spin_box_n_samples.setValue(5)
         self.spin_box_n_samples.valueChanged.connect(self._on_n_samples_changed)
@@ -127,12 +136,12 @@ class View(QMainWindow):
         self.add_source_button.setFixedWidth(70)
         self.add_source_button.setStyleSheet(ADD_BUTTON_STYLE)
         self.config_layout.addWidget(self.add_source_button)
-        self.added_sources_widgets: List[QWidget] = []
+        self.added_sources_widgets: list[QWidget] = []
 
         self.setLayout(self.central_layout)
         self.setFocus()
 
-    def set_init_values(self, files: Optional[List[Path]], seed: int, frame_type: FrameType, display_mode: DisplayMode):
+    def set_init_values(self, files: Optional[list[Path]], seed: int, frame_type: FrameType, display_mode: DisplayMode):
         self.spin_box_seed.setValue(seed)
         self.frame_type_dropdown.setCurrentIndex(list(FrameType).index(frame_type))
         self.mode_dropdown.setCurrentIndex(list(DisplayMode).index(display_mode))
@@ -213,10 +222,10 @@ class View(QMainWindow):
         file_dialog.setNameFilters(FILTERS)
 
         if file_dialog.exec():
-            files: Set[Path] = set(map(Path, file_dialog.selectedFiles()))
+            files: set[Path] = set(map(Path, file_dialog.selectedFiles()))
             if files:
-                valid_paths: Set[Path] = set(filter(check_path, files))
-                invalid_paths: Set[Path] = files - valid_paths
+                valid_paths: set[Path] = set(filter(check_path, files))
+                invalid_paths: set[Path] = files - valid_paths
 
                 if valid_paths:
                     self.add_source_requested.emit(list(valid_paths))
@@ -225,9 +234,24 @@ class View(QMainWindow):
                     invalid_paths_str = '\n'.join(str(invalid_path) for invalid_path in invalid_paths)
                     error_msg = QMessageBox(self)
                     error_msg.setWindowTitle(" ")
-                    error_msg.setText(f"An error occurred with these files:{invalid_paths_str}")
+                    error_msg.setText(f"An error occurred with these files:\n{invalid_paths_str}")
                     error_msg.setIcon(QMessageBox.Icon.Warning)
                     error_msg.exec()
+
+    def on_add_sources(self, file_paths: list[tuple[Path, bool]]) -> None:
+        added_paths = set(filter(lambda x: x[1], file_paths))
+        discarded_paths = set(file_paths) - added_paths
+
+        for file_path, status in added_paths:
+            self.on_add_source(file_path=file_path)
+
+        if discarded_paths:
+            invalid_paths = '\n'.join(map(lambda path: str(path[0]), discarded_paths))
+            error_msg = QMessageBox(self)
+            error_msg.setWindowTitle(" ")
+            error_msg.setText(f"An error occurred with these files:\n{invalid_paths}")
+            error_msg.setIcon(QMessageBox.Icon.Warning)
+            error_msg.exec()
 
     def on_add_source(self, file_path: Path) -> None:
         """
@@ -235,6 +259,7 @@ class View(QMainWindow):
 
         :param file_path: String path to the video source.
         """
+
         main_widget = QWidget()
         main_widget.setFixedHeight(40)
         main_widget.setStyleSheet(SOURCE_WIDGET)
@@ -282,14 +307,17 @@ class View(QMainWindow):
         self.central_layout.update()
         self.update()
 
-    def _on_n_samples_changed(self) -> None:
+    def _emit_n_samples(self) -> None:
         self.n_samples_changed.emit(self.spin_box_n_samples.value())
 
-    def _on_seed_changed(self) -> None:
-        """
-        Emits a signal when the user changes the random seed.
-        """
+    def _on_n_samples_changed(self) -> None:
+        self._n_samples_timer.start(1000)
+
+    def _emit_seed(self) -> None:
         self.seed_changed.emit(self.spin_box_seed.value())
+
+    def _on_seed_changed(self) -> None:
+        self._seed_timer.start(1000)
 
     def _on_delete_clicked(self, file_path: Path) -> None:
         """
@@ -334,7 +362,7 @@ class View(QMainWindow):
             self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.setFocus()
 
-    def get_max_frame_size(self) -> Tuple[int, int]:
+    def get_max_frame_size(self) -> tuple[int, int]:
         """
         Returns the maximal dimension the frame image can have.
 

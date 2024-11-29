@@ -1,7 +1,5 @@
-from typing import List
-
-from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QLabel
 
 
 class SpinningCircle(QLabel):
@@ -10,7 +8,7 @@ class SpinningCircle(QLabel):
 
         self.setFixedHeight(30)
         self.angle: int = 0
-        self.chars: List[str] = ["◒", "◐", "◓", "◑"]
+        self.chars: list[str] = ["◒", "◐", "◓", "◑"]
 
         self.timer = QTimer()
         self.timer.timeout.connect(self._rotate)

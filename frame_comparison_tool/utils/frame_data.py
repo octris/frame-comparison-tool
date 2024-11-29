@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from frame_comparison_tool.utils import FrameType
+
 import numpy as np
+
+from frame_comparison_tool.utils import FrameType
 
 
 @dataclass(frozen=True)

@@ -1,7 +1,7 @@
-from frame_comparison_tool.utils.direction import Direction
-from frame_comparison_tool.utils.operation import Operation
-from frame_comparison_tool.utils.frame_type import FrameType
 from frame_comparison_tool.utils.align import Align
+from frame_comparison_tool.utils.direction import Direction
+from frame_comparison_tool.utils.frame_type import FrameType
+from frame_comparison_tool.utils.operation import Operation
 
 
 class NoMatchingFrameTypeError(Exception):

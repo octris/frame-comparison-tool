@@ -1,11 +1,11 @@
 from queue import Queue
-from typing import override, Optional, Any, Tuple, Dict, Callable
+from typing import override, Optional, Any, Dict, Callable
+
+from PySide6.QtCore import QThread, Signal
 
 from frame_comparison_tool.utils.exceptions import InvalidOperationError
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.operation import Operation
-
-from PySide6.QtCore import QThread, Signal
 
 
 class Worker(QThread):
@@ -15,7 +15,7 @@ class Worker(QThread):
 
     def __init__(self, frame_loader_manager: FrameLoaderManager):
         super().__init__()
-        self.queue: Queue[Tuple[Optional[Operation], Dict[str, Any]]] = Queue()
+        self.queue: Queue[tuple[Optional[Operation], Dict[str, Any]]] = Queue()
         self.frame_loader_manager: FrameLoaderManager = frame_loader_manager
         self.on_frame_sample: Optional[Callable] = None
 

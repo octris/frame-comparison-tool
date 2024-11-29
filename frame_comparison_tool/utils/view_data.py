@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional
+
 import numpy as np
 
 from frame_comparison_tool.utils import DisplayMode

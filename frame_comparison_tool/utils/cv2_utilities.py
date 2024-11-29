@@ -1,4 +1,3 @@
-from typing import Tuple
 import cv2
 
 from frame_comparison_tool.utils.align import Align
@@ -16,7 +15,7 @@ _ALIGN = Align.LEFT
 def get_text_size(text: str,
                   font_face: int,
                   font_scale: float,
-                  thickness: int) -> Tuple[int, int]:
+                  thickness: int) -> tuple[int, int]:
     """
     Calculates the total width and adjusted height of the text.
 

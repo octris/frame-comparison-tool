@@ -1,7 +1,9 @@
+from pathlib import Path
+from typing import Optional
+
 import cv2
 import numpy as np
-from pathlib import Path
-from typing import List, Optional, Tuple
+
 from frame_comparison_tool.utils import put_bordered_text, Align, FrameType, Direction
 from frame_comparison_tool.utils.exceptions import NoMatchingFrameTypeError, ImageReadError, VideoCaptureFailed, \
     FramePositionError, InvalidDirectionError
@@ -21,7 +23,7 @@ class FrameLoader:
         """
         self._file_path: Path = file_path
         self._video_capture: cv2.VideoCapture = cv2.VideoCapture(str(self._file_path.absolute()))
-        self.frame_data: List[FrameData] = []
+        self.frame_data: list[FrameData] = []
         self._total_frames: int = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
     @property
@@ -98,7 +100,7 @@ class FrameLoader:
         return frame
 
     def _find_closest_frame(self, frame_position: int, direction: Direction, frame_type: FrameType) \
-            -> Tuple[int, np.ndarray]:
+            -> tuple[int, np.ndarray]:
         """
         Returns closest frame of specific frame type, starting from given position.
 
@@ -153,7 +155,7 @@ class FrameLoader:
         self.frame_data[frame_idx] = frame_data
 
     def _get_next_frame(self, frame_position: int, direction: Direction, frame_type: FrameType) \
-            -> Tuple[int, np.ndarray]:
+            -> tuple[int, np.ndarray]:
         new_frame_position, image = self._find_closest_frame(frame_position=frame_position,
                                                              direction=direction,
                                                              frame_type=frame_type)
@@ -162,14 +164,14 @@ class FrameLoader:
 
         return new_frame_position, frame
 
-    def sample_frames(self, frame_positions: List[int], frame_type: FrameType) -> None:
+    def sample_frames(self, frame_positions: list[int], frame_type: FrameType) -> None:
         """
         Samples frames based on the given starting frame indices and desired frame type.
 
         :param frame_positions: List of starting frame positions.
         :param frame_type: Desired frame type.
         """
-        buffer: List[Tuple[int, FrameData]] = []
+        buffer: list[tuple[int, FrameData]] = []
 
         for idx, original_frame_position in enumerate(frame_positions):
             if (self.frame_data

@@ -1,11 +1,12 @@
 from pathlib import Path
+from typing import Optional, OrderedDict, Callable
 
 import numpy as np
-from typing import List, Tuple, Optional, OrderedDict, Callable
 
 from frame_comparison_tool.utils import FrameLoader, FrameType, Operation, DisplayMode, Direction
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.worker import Worker
+from loguru import logger
 
 
 class Model:
@@ -13,7 +14,7 @@ class Model:
     The model class, responsible for backend logic regarding storing and manipulating data.
     """
 
-    def __init__(self, files: Optional[List[Path]], n_samples: int, seed: int,
+    def __init__(self, files: Optional[list[Path]], n_samples: int, seed: int,
                  frame_type: FrameType):
         """
         Initializes a ``Model`` instance.
@@ -28,14 +29,18 @@ class Model:
         """Range (0, `n_samples - 1`), denotes the frame index inside the `frame_positions` list."""
         self.curr_mode = DisplayMode.SCALED
         """Current display mode."""
-        self.max_frame_size: Optional[Tuple[int, int]] = None
+        self.max_frame_size: Optional[tuple[int, int]] = None
         """Maximum frame width and height."""
 
         self.worker = Worker(frame_loader_manager=self.frame_loader_manager)
         self.worker.start()
 
         if files:
-            self.add_sources(file_paths=files)
+            added_sources = self.add_sources(file_paths=files)
+            discarded_sources = map(lambda data: str(data[0]), filter(lambda x: not x[1], added_sources))
+
+            if discarded_sources:
+                logger.error(f"Could not add the following files:\n{'\n'.join(discarded_sources)}")
 
     def set_on_frames_ready_callback(self, on_frames_ready: Callable) -> None:
         self.worker.on_frames_ready.connect(on_frames_ready)
@@ -51,7 +56,7 @@ class Model:
         return self.frame_loader_manager.n_samples
 
     @property
-    def frame_positions(self) -> List[int]:
+    def frame_positions(self) -> list[int]:
         return self.frame_loader_manager.frame_positions
 
     @property
@@ -89,7 +94,7 @@ class Model:
         """
         return self.frame_loader_manager.get_frame(src_idx=self.curr_src_idx, frame_idx=self.curr_frame_idx)
 
-    def add_sources(self, file_paths: List[Path]) -> List[Optional[Path]]:
+    def add_sources(self, file_paths: list[Path]) -> list[tuple[Path, bool]]:
         """
         Adds video source to the model.
 

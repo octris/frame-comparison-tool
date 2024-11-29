@@ -1,6 +1,4 @@
-from typing import List
-
-MIME_TYPES: List[str] = [
+MIME_TYPES: list[str] = [
     "video/x-matroska",
     "video/mp4",
     "video/quicktime"
@@ -14,7 +12,7 @@ MIME_TYPES: List[str] = [
     "video/webm",
 ]
 
-VIDEO_EXTENSIONS: List[str] = [
+VIDEO_EXTENSIONS: list[str] = [
     ".mkv",
     ".mp4",
     ".mp4v",
