@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from frame_comparison_tool.utils.align import Align
 from frame_comparison_tool.utils.direction import Direction
 from frame_comparison_tool.utils.frame_type import FrameType
@@ -24,12 +26,21 @@ class ImageReadError(Exception):
     Raised when ``cv2.VideoCapture`` instance could not return image.
     """
 
-    def __init__(self, message="Could not read image") -> None:
+    def __init__(self, source: Path, message="Could not read image") -> None:
         """
         Initialize an ``ImageReadError`` instance.
 
         :param message: Error message to display.
         """
+        self.source = source
+        self.message = message
+        super().__init__(self.message)
+
+
+class MultipleSourcesImageReadError(Exception):
+
+    def __init__(self, errors: list[ImageReadError], message="Could not read image"):
+        self.sources: list[Path] = [error.source for error in errors]
         self.message = message
         super().__init__(self.message)
 

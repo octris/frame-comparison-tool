@@ -374,3 +374,10 @@ class View(QMainWindow):
         height = viewport.height()
 
         return width, height
+
+    def display_error_message(self, message: str) -> None:
+        error_msg = QMessageBox(self)
+        error_msg.setWindowTitle(" ")
+        error_msg.setText(f"{message}")
+        error_msg.setIcon(QMessageBox.Icon.Warning)
+        error_msg.exec()

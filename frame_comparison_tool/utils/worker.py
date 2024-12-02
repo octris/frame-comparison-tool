@@ -1,9 +1,10 @@
+from pathlib import Path
 from queue import Queue
 from typing import override, Optional, Any, Dict, Callable
 
 from PySide6.QtCore import QThread, Signal
 
-from frame_comparison_tool.utils.exceptions import InvalidOperationError
+from frame_comparison_tool.utils.exceptions import InvalidOperationError, ImageReadError, MultipleSourcesImageReadError
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.operation import Operation
 
@@ -12,6 +13,7 @@ class Worker(QThread):
     on_frames_ready: Signal = Signal()
     on_task_started: Signal = Signal()
     on_task_finished: Signal = Signal()
+    on_task_failed: Signal = Signal(Path)
 
     def __init__(self, frame_loader_manager: FrameLoaderManager):
         super().__init__()
@@ -31,9 +33,15 @@ class Worker(QThread):
 
             if operation == Operation.RESAMPLE:
                 self.frame_loader_manager.clear_frame_positions()
-                self.frame_loader_manager.sample_all_frames()
+                try:
+                    self.frame_loader_manager.sample_all_frames()
+                except MultipleSourcesImageReadError as e:
+                    self.on_task_failed.emit(e.sources)
             elif operation == Operation.SAMPLE:
-                self.frame_loader_manager.sample_all_frames()
+                try:
+                    self.frame_loader_manager.sample_all_frames()
+                except MultipleSourcesImageReadError as e:
+                    self.on_task_failed.emit(e.sources)
             elif operation == Operation.OFFSET:
                 self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"),
                                                        src_idx=kwargs.get("src_idx"),

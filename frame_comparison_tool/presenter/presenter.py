@@ -24,9 +24,7 @@ class Presenter:
         """
         self.model: Model = model
         """``Model`` instance."""
-        self.model.set_on_frames_ready_callback(self.update_display)
-        self.model.set_on_task_started_callback(self._start_loading)
-        self.model.set_on_task_finished_callback(self._stop_loading)
+        self._set_init_callbacks()
 
         self.view: View = view
         """``View`` instance."""
@@ -36,6 +34,12 @@ class Presenter:
                                   frame_type=self.model.frame_type,
                                   display_mode=model.curr_mode)
         self._connect_signals()
+
+    def _set_init_callbacks(self):
+        self.model.set_on_frames_ready_callback(self.update_display)
+        self.model.set_on_task_started_callback(self._start_loading)
+        self.model.set_on_task_finished_callback(self._stop_loading)
+        self.model.set_on_task_failed_callback(self._stop_task)
 
     def _connect_signals(self) -> None:
         """
@@ -192,3 +196,14 @@ class Presenter:
 
     def _stop_loading(self) -> None:
         self.view.loading_circle.stop()
+
+    def _stop_task(self, sources: list[Path]) -> None:
+        self._stop_loading()
+        self.view.display_error_message(
+            message=f"A problem occurred with the following video file(s):"
+                    f"\n{'\n'.join(str(source) for source in sources)}\n"
+                    f"These files WILL BE REMOVED!"
+        )
+        for source in sources:
+            self.delete_source(file_path=source)
+        self.update_display()

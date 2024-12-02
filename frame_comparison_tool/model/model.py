@@ -37,7 +37,7 @@ class Model:
 
         if files:
             added_sources = self.add_sources(file_paths=files)
-            discarded_sources = map(lambda data: str(data[0]), filter(lambda x: not x[1], added_sources))
+            discarded_sources = list(map(lambda data: str(data[0]), filter(lambda x: not x[1], added_sources)))
 
             if discarded_sources:
                 logger.error(f"Could not add the following files:\n{'\n'.join(discarded_sources)}")
@@ -50,6 +50,9 @@ class Model:
 
     def set_on_task_finished_callback(self, on_task_finished: Callable) -> None:
         self.worker.on_task_finished.connect(on_task_finished)
+
+    def set_on_task_failed_callback(self, on_task_failed: Callable):
+        self.worker.on_task_failed.connect(on_task_failed)
 
     @property
     def n_samples(self) -> int:

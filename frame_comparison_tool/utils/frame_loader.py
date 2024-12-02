@@ -57,7 +57,7 @@ class FrameLoader:
             if success:
                 return image
             else:
-                raise ImageReadError()
+                raise ImageReadError(source=self._file_path)
         else:
             raise VideoCaptureFailed()
 

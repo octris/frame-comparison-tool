@@ -8,6 +8,7 @@ from typing import Optional
 import numpy as np
 
 from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
+from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError
 
 
 class FrameLoaderManager:
@@ -105,8 +106,16 @@ class FrameLoaderManager:
             self.frame_positions = self.frame_positions[:idx]
             self.frame_positions.extend(new_frame_positions)
 
+        errors: list[ImageReadError] = []
+
         for frame_loader in frame_loaders:
-            frame_loader.sample_frames(
-                frame_positions=self.frame_positions,
-                frame_type=self.frame_type
-            )
+            try:
+                frame_loader.sample_frames(
+                    frame_positions=self.frame_positions,
+                    frame_type=self.frame_type
+                )
+            except ImageReadError as e:
+                errors.append(e)
+
+        if errors:
+            raise MultipleSourcesImageReadError(errors=errors)
