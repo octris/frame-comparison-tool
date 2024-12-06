@@ -1,1 +1,1 @@
-from .presenter import Presenter
+from frame_comparison_tool.presenter.presenter import Presenter

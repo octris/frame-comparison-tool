@@ -7,11 +7,11 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QH
     QLabel, QFileDialog, QSpinBox, QMessageBox
 
 from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direction, check_path
-from .eliding_label import ElidingLabel
-from .pannable_scroll_area import PannableScrollArea
-from .spinning_circle import SpinningCircle
-from .styles import *
-from ..utils.extension_filters import FILTERS
+from frame_comparison_tool.view.eliding_label import ElidingLabel
+from frame_comparison_tool.view.pannable_scroll_area import PannableScrollArea
+from frame_comparison_tool.view.spinning_circle import SpinningCircle
+from frame_comparison_tool.view.styles import *
+from frame_comparison_tool.utils.extension_filters import FILTERS
 
 
 class View(QMainWindow):
@@ -375,6 +375,7 @@ class View(QMainWindow):
 
         return width, height
 
+    # TODO: Deduplicate code
     def display_error_message(self, message: str) -> None:
         error_msg = QMessageBox(self)
         error_msg.setWindowTitle(" ")

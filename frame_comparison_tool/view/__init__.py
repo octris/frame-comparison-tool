@@ -1,1 +1,1 @@
-from .view import View
+from frame_comparison_tool.view.view import View

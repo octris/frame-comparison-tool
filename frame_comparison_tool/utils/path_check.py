@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from .extension_filters import VIDEO_EXTENSIONS
+from frame_comparison_tool.utils.extension_filters import VIDEO_EXTENSIONS
 
 
 def check_path(file_path: Path) -> bool:
