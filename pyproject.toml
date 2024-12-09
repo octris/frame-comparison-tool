@@ -3,17 +3,19 @@ name = "frame-comparison-tool"
 version = "0.1.0"
 description = ""
 authors = ["Ana Anić Banić <git@ana.banic.hr>"]
-readme = "README.md"
+# readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
-
+python = ">=3.11,<3.14"
 opencv-contrib-python = "^4.10.0.84"
-pillow = "^10.4.0"
-pyside6 = "^6.7.2"
+pillow = "^11.0.0"
+pyside6 = "^6.8.1"
 aenum = "^3.1.15"
-loguru = "^0.7.2"
+loguru = "^0.7.3"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry-pyinstaller-plugin.scripts]
+frame-comparison-tool = { source = "__main__.py", type = "onefile", bundle = true }
