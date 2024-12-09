@@ -122,10 +122,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.26.0", markers = "python_version >= \"3.12\""},
-    {version = ">=1.23.5", markers = "python_version >= \"3.11\" and python_version < \"3.12\""},
-]
+numpy = {version = ">=1.26.0", markers = "python_version >= \"3.12\""}
 
 [[package]]
 name = "pillow"
@@ -299,5 +296,5 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = ">=3.11,<3.14"
-content-hash = "685ab39c906cb3e5331c7a66540cc501ce7e224435de5cd3afe4a61c120996a4"
+python-versions = ">=3.12,<3.14"
+content-hash = "970161fd524eabbb09d9e8765a9f996c40dad97bbff3838db7d10f2da6e9d1d7"
