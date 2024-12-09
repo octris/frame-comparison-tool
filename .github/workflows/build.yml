@@ -33,6 +33,9 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
 
+      - name: Install PyInstaller plugin for Poetry
+        run: poetry self add poetry-pyinstaller-plugin
+
       - name: Load cached Poetry virtualenv
         id: cached-poetry-dependencies
         uses: actions/cache@v3
