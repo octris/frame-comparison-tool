@@ -42,6 +42,10 @@ class Model:
             if discarded_sources:
                 logger.error(f"Could not add the following files:\n{'\n'.join(discarded_sources)}")
 
+    def exit_app(self) -> None:
+        if self.worker:
+            self.worker.stop()
+
     def set_on_frames_ready_callback(self, on_frames_ready: Callable) -> None:
         self.worker.on_frames_ready.connect(on_frames_ready)
 

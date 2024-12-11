@@ -1,4 +1,5 @@
 from pathlib import Path
+from struct import error
 from typing import override, Optional
 
 from PySide6.QtCore import Qt, Signal, QTimer
@@ -30,6 +31,7 @@ class View(QMainWindow):
     seed_changed = Signal(int)
     n_samples_changed = Signal(int)
     shown = Signal(tuple)
+    exit_app_requested = Signal()
 
     def __init__(self):
         """
@@ -94,13 +96,14 @@ class View(QMainWindow):
         self.spin_box_n_samples = QSpinBox()
         self.spin_box_n_samples.setValue(5)
         self.spin_box_n_samples.valueChanged.connect(self._on_n_samples_changed)
+        self.spin_box_n_samples.setRange(1, 100)
         self.spin_box_n_samples.setFixedWidth(100)
         self.spin_box_n_samples.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_n_samples.wheelEvent = lambda event: None
         self.config_layout.addWidget(self.spin_box_n_samples)
 
         self.spin_box_seed = QSpinBox()
-        self.spin_box_seed.setRange(0, 10000)
+        self.spin_box_seed.setRange(0, 1000000)
         self.spin_box_seed.setValue(42)
         self.spin_box_seed.valueChanged.connect(self._on_seed_changed)
         self.spin_box_seed.setFixedWidth(100)
@@ -159,6 +162,11 @@ class View(QMainWindow):
         self.presenter = presenter
 
     @override
+    def closeEvent(self, event) -> None:
+        self.exit_app_requested.emit()
+        super().closeEvent(event)
+
+    @override
     def show(self) -> None:
         """
         Shows the main window and emits a signal.
@@ -213,6 +221,14 @@ class View(QMainWindow):
         self.setFocus()
         super().mousePressEvent(event)
 
+    def _display_error_message(self, text: str, window_title: str = " ") -> None:
+        error_msg = QMessageBox(self)
+        error_msg.setWindowTitle(window_title)
+        error_msg.setText(text)
+        error_msg.setIcon(QMessageBox.Icon.Warning)
+
+        error_msg.exec()
+
     def _on_add_source_clicked(self) -> None:
         """
         Emits a signal when the user adds a new video source.
@@ -232,11 +248,8 @@ class View(QMainWindow):
 
                 if invalid_paths:
                     invalid_paths_str = '\n'.join(str(invalid_path) for invalid_path in invalid_paths)
-                    error_msg = QMessageBox(self)
-                    error_msg.setWindowTitle(" ")
-                    error_msg.setText(f"An error occurred with these files:\n{invalid_paths_str}")
-                    error_msg.setIcon(QMessageBox.Icon.Warning)
-                    error_msg.exec()
+                    error_text = f"An error occurred with these files:\n{invalid_paths_str}"
+                    self._display_error_message(text=error_text)
 
     def on_add_sources(self, file_paths: list[tuple[Path, bool]]) -> None:
         added_paths = set(filter(lambda x: x[1], file_paths))
@@ -247,11 +260,8 @@ class View(QMainWindow):
 
         if discarded_paths:
             invalid_paths = '\n'.join(map(lambda path: str(path[0]), discarded_paths))
-            error_msg = QMessageBox(self)
-            error_msg.setWindowTitle(" ")
-            error_msg.setText(f"An error occurred with these files:\n{invalid_paths}")
-            error_msg.setIcon(QMessageBox.Icon.Warning)
-            error_msg.exec()
+            error_text = f"An error occurred with these files:\n{invalid_paths}"
+            self._display_error_message(text=error_text)
 
     def on_add_source(self, file_path: Path) -> None:
         """
@@ -374,11 +384,3 @@ class View(QMainWindow):
         height = viewport.height()
 
         return width, height
-
-    # TODO: Deduplicate code
-    def display_error_message(self, message: str) -> None:
-        error_msg = QMessageBox(self)
-        error_msg.setWindowTitle(" ")
-        error_msg.setText(f"{message}")
-        error_msg.setIcon(QMessageBox.Icon.Warning)
-        error_msg.exec()

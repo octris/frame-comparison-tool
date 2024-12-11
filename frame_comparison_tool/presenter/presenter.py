@@ -30,7 +30,8 @@ class Presenter:
         """``View`` instance."""
 
         self.view.set_presenter(self)
-        self.view.set_init_values(files=model.sources.keys(), seed=self.model.seed,
+        self.view.set_init_values(files=model.sources.keys(),
+                                  seed=self.model.seed,
                                   frame_type=self.model.frame_type,
                                   display_mode=model.curr_mode)
         self._connect_signals()
@@ -56,6 +57,10 @@ class Presenter:
         self.view.seed_changed.connect(self.change_seed)
         self.view.n_samples_changed.connect(self.change_n_samples)
         self.view.shown.connect(self.resize_frame)
+        self.view.exit_app_requested.connect(self._exit_app)
+
+    def _exit_app(self) -> None:
+        self.model.exit_app()
 
     def add_source(self, file_paths: list[Path]) -> None:
         """
