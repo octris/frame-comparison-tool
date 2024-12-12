@@ -21,10 +21,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install UPX
+      - name: Install UPX (Linux/Windows)
+        if: runner.os != 'macOS'
         uses: crazy-max/ghaction-upx@v3
         with:
           install-only: true
+
+      - name: Install UPX (macOS)
+        if: runner.os == 'macOS'
+        run: brew install upx
 
       - name: Set up Python
         uses: actions/setup-python@v5
