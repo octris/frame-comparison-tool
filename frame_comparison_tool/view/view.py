@@ -59,7 +59,7 @@ class View(QMainWindow):
         self.central_layout.setSpacing(4)
 
         self.frame_widget = QLabel()
-        self.frame_widget.setStyleSheet(FRAME_STYLE)
+        # self.frame_widget.setStyleSheet(FRAME_STYLE)
         self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -68,7 +68,7 @@ class View(QMainWindow):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.scroll_area.setMinimumHeight(300)
-        self.scroll_area.setStyleSheet(SCROLL_AREA_STYLE)
+        # self.scroll_area.setStyleSheet(SCROLL_AREA_STYLE)
         self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.central_layout.addWidget(self.scroll_area, stretch=6)
 
@@ -76,7 +76,7 @@ class View(QMainWindow):
         self.central_layout.addWidget(self.loading_circle, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.config_widget = QWidget()
-        self.config_widget.setStyleSheet(CONFIG_AREA_STYLE)
+        # self.config_widget.setStyleSheet(CONFIG_AREA_STYLE)
         self.config_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.central_layout.addWidget(self.config_widget, stretch=0)
 
@@ -93,24 +93,36 @@ class View(QMainWindow):
         self._n_samples_timer.setSingleShot(True)
         self._n_samples_timer.timeout.connect(self._emit_n_samples)
 
+        self.n_samples_container = QHBoxLayout()
+        self.n_samples_label = QLabel("Number of frames:")
         self.spin_box_n_samples = QSpinBox()
         self.spin_box_n_samples.setValue(5)
         self.spin_box_n_samples.valueChanged.connect(self._on_n_samples_changed)
         self.spin_box_n_samples.setRange(1, 100)
         self.spin_box_n_samples.setFixedWidth(100)
-        self.spin_box_n_samples.setStyleSheet(SPIN_BOX_STYLE)
+        # self.spin_box_n_samples.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_n_samples.wheelEvent = lambda event: None
-        self.config_layout.addWidget(self.spin_box_n_samples)
+        self.n_samples_container.addWidget(self.n_samples_label)
+        self.n_samples_container.addWidget(self.spin_box_n_samples)
+        self.config_layout.addLayout(self.n_samples_container)
+        self.config_layout.addStretch(1)
 
+        self.seed_container = QHBoxLayout()
+        self.seed_label = QLabel("Seed:")
         self.spin_box_seed = QSpinBox()
         self.spin_box_seed.setRange(0, 1000000)
         self.spin_box_seed.setValue(42)
         self.spin_box_seed.valueChanged.connect(self._on_seed_changed)
         self.spin_box_seed.setFixedWidth(100)
-        self.spin_box_seed.setStyleSheet(SPIN_BOX_STYLE)
+        # self.spin_box_seed.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_seed.wheelEvent = lambda event: None
-        self.config_layout.addWidget(self.spin_box_seed)
+        self.seed_container.addWidget(self.seed_label)
+        self.seed_container.addWidget(self.spin_box_seed)
+        self.config_layout.addLayout(self.seed_container)
+        self.config_layout.addStretch(1)
 
+        self.frame_type_container = QHBoxLayout()
+        self.frame_type_label = QLabel("Frame type:")
         self.frame_type_dropdown = QComboBox(self.config_widget)
         # noinspection PyTypeChecker
         self.frame_type_dropdown.addItems([
@@ -121,23 +133,31 @@ class View(QMainWindow):
         ])
         self.frame_type_dropdown.currentTextChanged.connect(self._on_frame_type_changed)
         self.frame_type_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.frame_type_dropdown.setStyleSheet(DROPDOWN_STYLE)
+        # self.frame_type_dropdown.setStyleSheet(DROPDOWN_STYLE)
         self.frame_type_dropdown.wheelEvent = lambda event: None
-        self.config_layout.addWidget(self.frame_type_dropdown)
+        self.frame_type_container.addWidget(self.frame_type_label)
+        self.frame_type_container.addWidget(self.frame_type_dropdown)
+        self.config_layout.addLayout(self.frame_type_container)
+        self.config_layout.addStretch(1)
 
+        self.display_mode_container = QHBoxLayout()
+        self.display_mode_label = QLabel("Display mode:")
         self.mode_dropdown = QComboBox(self.config_widget)
         self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
         self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.mode_dropdown.setStyleSheet(DROPDOWN_STYLE)
+        # self.mode_dropdown.setStyleSheet(DROPDOWN_STYLE)
         self.mode_dropdown.wheelEvent = lambda event: None
-        self.config_layout.addWidget(self.mode_dropdown)
+        self.display_mode_container.addWidget(self.display_mode_label)
+        self.display_mode_container.addWidget(self.mode_dropdown)
+        self.config_layout.addLayout(self.display_mode_container)
+        self.config_layout.addStretch(1)
 
         self.add_source_button = QPushButton('Add', self.config_widget)
         self.add_source_button.clicked.connect(self._on_add_source_clicked)
         self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.add_source_button.setFixedWidth(70)
-        self.add_source_button.setStyleSheet(ADD_BUTTON_STYLE)
+        # self.add_source_button.setStyleSheet(ADD_BUTTON_STYLE)
         self.config_layout.addWidget(self.add_source_button)
         self.added_sources_widgets: list[QWidget] = []
 
@@ -272,7 +292,7 @@ class View(QMainWindow):
 
         main_widget = QWidget()
         main_widget.setFixedHeight(40)
-        main_widget.setStyleSheet(SOURCE_WIDGET)
+        # main_widget.setStyleSheet(SOURCE_WIDGET)
 
         widget_layout = QHBoxLayout(main_widget)
         widget_layout.setContentsMargins(8, 2, 8, 2)
@@ -280,13 +300,13 @@ class View(QMainWindow):
 
         icon_label = QLabel()
         icon_label.setFixedSize(24, 24)
-        icon_label.setStyleSheet(FILE_ICON_LABEL_STYLE)
+        # icon_label.setStyleSheet(FILE_ICON_LABEL_STYLE)
         icon_label.setText("📁")
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         widget_layout.addWidget(icon_label)
 
         source_label = ElidingLabel(str(file_path))
-        source_label.setStyleSheet(SOURCE_LABEL_STYLE)
+        # source_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
         file_size = file_path.stat().st_size / (1024 * 1024)
 
@@ -297,12 +317,12 @@ class View(QMainWindow):
             file_size_str = f"{file_size:7.2f} GiB"
 
         file_size_label = QLabel(file_size_str)
-        file_size_label.setStyleSheet(SOURCE_LABEL_STYLE)
+        # file_size_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
         delete_button = QPushButton('Delete')
         delete_button.setFixedWidth(70)
         delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        delete_button.setStyleSheet(DELETE_BUTTON_STYLE)
+        # delete_button.setStyleSheet(DELETE_BUTTON_STYLE)
         delete_button.clicked.connect(lambda: self._on_delete_clicked(file_path))
 
         main_widget.setLayout(widget_layout)
