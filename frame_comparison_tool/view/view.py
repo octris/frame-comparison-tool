@@ -288,14 +288,26 @@ class View(QMainWindow):
         source_label = ElidingLabel(str(file_path))
         source_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
+        file_size = file_path.stat().st_size / (1024 * 1024)
+
+        if file_size < 1024:
+            file_size_str = f"{file_size:7.2f} MiB"
+        else:
+            file_size /= 1024
+            file_size_str = f"{file_size:7.2f} GiB"
+
+        file_size_label = QLabel(file_size_str)
+        file_size_label.setStyleSheet(SOURCE_LABEL_STYLE)
+
         delete_button = QPushButton('Delete')
-        delete_button.setFixedWidth(70)  # Fixed width for consistency
-        delete_button.setCursor(Qt.CursorShape.PointingHandCursor)  # Change cursor on hover
+        delete_button.setFixedWidth(70)
+        delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
         delete_button.setStyleSheet(DELETE_BUTTON_STYLE)
         delete_button.clicked.connect(lambda: self._on_delete_clicked(file_path))
 
         main_widget.setLayout(widget_layout)
-        widget_layout.addWidget(source_label)
+        widget_layout.addWidget(source_label, stretch=1)
+        widget_layout.addWidget(file_size_label)
         widget_layout.addWidget(delete_button)
 
         self.central_layout.addWidget(main_widget)
