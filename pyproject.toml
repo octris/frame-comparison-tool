@@ -18,4 +18,4 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.poetry-pyinstaller-plugin.scripts]
-frame-comparison-tool = { source = "frame_comparison_tool/__main__.py", type = "onefile", bundle = true, upx = true }
+frame-comparison-tool = { source = "frame_comparison_tool/__main__.py", type = "onefile", bundle = true }
