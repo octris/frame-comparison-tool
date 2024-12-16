@@ -11,8 +11,7 @@ from frame_comparison_tool.utils import FrameType, DisplayMode, ViewData, Direct
 from frame_comparison_tool.view.eliding_label import ElidingLabel
 from frame_comparison_tool.view.pannable_scroll_area import PannableScrollArea
 from frame_comparison_tool.view.spinning_circle import SpinningCircle
-from frame_comparison_tool.view.styles import *
-from frame_comparison_tool.utils.extension_filters import FILTERS
+from frame_comparison_tool.utils.video_formats import VideoFormats
 
 
 class View(QMainWindow):
@@ -164,7 +163,9 @@ class View(QMainWindow):
         self.setLayout(self.central_layout)
         self.setFocus()
 
-    def set_init_values(self, files: Optional[list[Path]], seed: int, frame_type: FrameType, display_mode: DisplayMode):
+    def set_init_values(self, files: Optional[list[Path]], n_samples: int, seed: int, frame_type: FrameType,
+                        display_mode: DisplayMode):
+        self.spin_box_n_samples.setValue(n_samples)
         self.spin_box_seed.setValue(seed)
         self.frame_type_dropdown.setCurrentIndex(list(FrameType).index(frame_type))
         self.mode_dropdown.setCurrentIndex(list(DisplayMode).index(display_mode))
@@ -241,10 +242,10 @@ class View(QMainWindow):
         self.setFocus()
         super().mousePressEvent(event)
 
-    def _display_error_message(self, text: str, window_title: str = " ") -> None:
+    def display_error_message(self, message: str, window_title: str = " ") -> None:
         error_msg = QMessageBox(self)
         error_msg.setWindowTitle(window_title)
-        error_msg.setText(text)
+        error_msg.setText(message)
         error_msg.setIcon(QMessageBox.Icon.Warning)
 
         error_msg.exec()
@@ -255,7 +256,7 @@ class View(QMainWindow):
         """
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
-        file_dialog.setNameFilters(FILTERS)
+        file_dialog.setNameFilters(VideoFormats.get_file_filters())
 
         if file_dialog.exec():
             files: set[Path] = set(map(Path, file_dialog.selectedFiles()))
@@ -269,7 +270,7 @@ class View(QMainWindow):
                 if invalid_paths:
                     invalid_paths_str = '\n'.join(str(invalid_path) for invalid_path in invalid_paths)
                     error_text = f"An error occurred with these files:\n{invalid_paths_str}"
-                    self._display_error_message(text=error_text)
+                    self.display_error_message(message=error_text)
 
     def on_add_sources(self, file_paths: list[tuple[Path, bool]]) -> None:
         added_paths = set(filter(lambda x: x[1], file_paths))
@@ -281,7 +282,7 @@ class View(QMainWindow):
         if discarded_paths:
             invalid_paths = '\n'.join(map(lambda path: str(path[0]), discarded_paths))
             error_text = f"An error occurred with these files:\n{invalid_paths}"
-            self._display_error_message(text=error_text)
+            self.display_error_message(message=error_text)
 
     def on_add_source(self, file_path: Path) -> None:
         """

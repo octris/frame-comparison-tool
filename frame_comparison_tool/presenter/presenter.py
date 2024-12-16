@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 from PIL import Image
@@ -30,10 +29,11 @@ class Presenter:
         """``View`` instance."""
 
         self.view.set_presenter(self)
-        self.view.set_init_values(files=model.sources.keys(),
+        self.view.set_init_values(files=self.model.sources.keys(),
+                                  n_samples=self.model.n_samples,
                                   seed=self.model.seed,
                                   frame_type=self.model.frame_type,
-                                  display_mode=model.curr_mode)
+                                  display_mode=self.model.curr_mode)
         self._connect_signals()
 
     def _set_init_callbacks(self):

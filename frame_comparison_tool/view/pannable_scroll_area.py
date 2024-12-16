@@ -1,7 +1,9 @@
+from typing import Optional
+
 from PySide6.QtCore import QPoint
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QMouseEvent
-from PySide6.QtWidgets import QScrollArea
+from PySide6.QtWidgets import QScrollArea, QWidget
 
 
 class PannableScrollArea(QScrollArea):
@@ -11,7 +13,7 @@ class PannableScrollArea(QScrollArea):
     Allows the user to click and drag the frame within the scroll area.
     """
 
-    def __init__(self, parent=None) -> None:
+    def __init__(self, parent: Optional[QWidget] = None) -> None:
         """
         Initializes a ``PannableScrollArea`` instance.
 
@@ -19,6 +21,7 @@ class PannableScrollArea(QScrollArea):
         """
 
         super().__init__(parent)
+
         self.panning: bool = False
         """
         Indicates whether the scroll area is currently being panned.
