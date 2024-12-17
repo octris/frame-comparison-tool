@@ -36,7 +36,11 @@ class Presenter:
                                   display_mode=self.model.curr_mode)
         self._connect_signals()
 
-    def _set_init_callbacks(self):
+    def _set_init_callbacks(self) -> None:
+        """
+        Set up initial callbacks from model to presenter.
+        """
+
         self.model.set_on_frames_ready_callback(self.update_display)
         self.model.set_on_task_started_callback(self._start_loading)
         self.model.set_on_task_finished_callback(self._stop_loading)
@@ -46,6 +50,7 @@ class Presenter:
         """
         Connect ``View`` signals to corresponding ``Presenter`` methods.
         """
+
         self.view.add_source_requested.connect(self.add_source)
         self.view.delete_source_requested.connect(self.delete_source)
         self.view.mode_changed.connect(self.change_mode)
@@ -60,6 +65,10 @@ class Presenter:
         self.view.exit_app_requested.connect(self._exit_app)
 
     def _exit_app(self) -> None:
+        """
+        Signal application exiting.
+        """
+
         self.model.exit_app()
 
     def add_source(self, file_paths: list[Path]) -> None:
@@ -86,6 +95,12 @@ class Presenter:
         self.update_display()
 
     def change_n_samples(self, n_samples: int) -> None:
+        """
+        Changes number of frames to sample and update display.
+
+        :param n_samples: New number of samples.
+        """
+
         self.model.update_n_samples(n_samples=n_samples)
         self.model.expand_frames(n_samples=n_samples)
         self.model.resample_frames()
@@ -197,12 +212,26 @@ class Presenter:
         return np.array(image)
 
     def _start_loading(self) -> None:
+        """
+        Start loading animation in view.
+        """
+
         self.view.loading_circle.start()
 
     def _stop_loading(self) -> None:
+        """
+        Stop loading animation in view.
+        """
+
         self.view.loading_circle.stop()
 
     def _stop_task(self, sources: list[Path]) -> None:
+        """
+        Handle task failure by removing problematic sources.
+
+        :param sources: List of source paths that caused errors.
+        """
+
         self._stop_loading()
         self.view.display_error_message(
             message=f"A problem occurred with the following video file(s):"

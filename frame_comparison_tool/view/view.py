@@ -1,9 +1,8 @@
 from pathlib import Path
-from struct import error
 from typing import override, Optional
 
 from PySide6.QtCore import Qt, Signal, QTimer
-from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent
+from PySide6.QtGui import QPixmap, QImage, QKeyEvent, QResizeEvent, QMouseEvent, QCloseEvent
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QMainWindow, QPushButton, QHBoxLayout, QComboBox, \
     QLabel, QFileDialog, QSpinBox, QMessageBox
 
@@ -16,7 +15,24 @@ from frame_comparison_tool.utils.video_formats import VideoFormats
 
 class View(QMainWindow):
     """
-    This class creates the GUI for user interactions and communicates with the ``Presenter`` through signals.
+    A graphical user interface for the frame comparison tool.
+
+    This class creates and manages the GUI components for video frame comparison.
+    It communicates with the ``Presenter`` through signals to handle user interactions.
+
+    Signals:
+        - ``add_source_requested``: Emitted when user requests to add new video sources.
+        - ``delete_source_requested``: Emitted when user requests to delete a video source.
+        - ``mode_changed``: Emitted when display mode is changed.
+        - ``frame_changed``: Emitted when user navigates between frames.
+        - ``source_changed``: Emitted when user switches between video sources.
+        - ``resize_requested``: Emitted when window is resized.
+        - ``frame_type_changed``: Emitted when frame type changes.
+        - ``offset_changed``: Emitted when user offsets a frame.
+        - ``seed_changed``: Emitted when random seed value changes.
+        - ``n_samples_changed``: Emitted when number of samples changes.
+        - ``shown``: Emitted when window is first shown.
+        - ``exit_app_requested``: Emitted when application exit is requested.
     """
 
     add_source_requested = Signal(list)
@@ -34,7 +50,7 @@ class View(QMainWindow):
 
     def __init__(self):
         """
-        Initializes a ``View`` instance.
+        Initializes a ``View`` instance with all UI components.
         """
         super().__init__()
 
@@ -45,7 +61,7 @@ class View(QMainWindow):
 
     def _init_ui(self) -> None:
         """
-        Initializes the user interface.
+        Initialize and configure all UI components.
         """
         self.setGeometry(100, 100, 1000, 800)
         self.setWindowTitle(f'Frame Comparison Tool')
@@ -58,7 +74,6 @@ class View(QMainWindow):
         self.central_layout.setSpacing(4)
 
         self.frame_widget = QLabel()
-        # self.frame_widget.setStyleSheet(FRAME_STYLE)
         self.frame_widget.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.frame_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
@@ -67,7 +82,6 @@ class View(QMainWindow):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.scroll_area.setMinimumHeight(300)
-        # self.scroll_area.setStyleSheet(SCROLL_AREA_STYLE)
         self.scroll_area.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.central_layout.addWidget(self.scroll_area, stretch=6)
 
@@ -75,7 +89,6 @@ class View(QMainWindow):
         self.central_layout.addWidget(self.loading_circle, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         self.config_widget = QWidget()
-        # self.config_widget.setStyleSheet(CONFIG_AREA_STYLE)
         self.config_widget.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.central_layout.addWidget(self.config_widget, stretch=0)
 
@@ -99,7 +112,6 @@ class View(QMainWindow):
         self.spin_box_n_samples.valueChanged.connect(self._on_n_samples_changed)
         self.spin_box_n_samples.setRange(1, 100)
         self.spin_box_n_samples.setFixedWidth(100)
-        # self.spin_box_n_samples.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_n_samples.wheelEvent = lambda event: None
         self.n_samples_container.addWidget(self.n_samples_label)
         self.n_samples_container.addWidget(self.spin_box_n_samples)
@@ -113,7 +125,6 @@ class View(QMainWindow):
         self.spin_box_seed.setValue(42)
         self.spin_box_seed.valueChanged.connect(self._on_seed_changed)
         self.spin_box_seed.setFixedWidth(100)
-        # self.spin_box_seed.setStyleSheet(SPIN_BOX_STYLE)
         self.spin_box_seed.wheelEvent = lambda event: None
         self.seed_container.addWidget(self.seed_label)
         self.seed_container.addWidget(self.spin_box_seed)
@@ -132,7 +143,6 @@ class View(QMainWindow):
         ])
         self.frame_type_dropdown.currentTextChanged.connect(self._on_frame_type_changed)
         self.frame_type_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.frame_type_dropdown.setStyleSheet(DROPDOWN_STYLE)
         self.frame_type_dropdown.wheelEvent = lambda event: None
         self.frame_type_container.addWidget(self.frame_type_label)
         self.frame_type_container.addWidget(self.frame_type_dropdown)
@@ -145,7 +155,6 @@ class View(QMainWindow):
         self.mode_dropdown.addItems([mode.value for mode in DisplayMode])
         self.mode_dropdown.currentTextChanged.connect(self._on_mode_changed)
         self.mode_dropdown.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.mode_dropdown.setStyleSheet(DROPDOWN_STYLE)
         self.mode_dropdown.wheelEvent = lambda event: None
         self.display_mode_container.addWidget(self.display_mode_label)
         self.display_mode_container.addWidget(self.mode_dropdown)
@@ -156,7 +165,6 @@ class View(QMainWindow):
         self.add_source_button.clicked.connect(self._on_add_source_clicked)
         self.add_source_button.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.add_source_button.setFixedWidth(70)
-        # self.add_source_button.setStyleSheet(ADD_BUTTON_STYLE)
         self.config_layout.addWidget(self.add_source_button)
         self.added_sources_widgets: list[QWidget] = []
 
@@ -164,7 +172,17 @@ class View(QMainWindow):
         self.setFocus()
 
     def set_init_values(self, files: Optional[list[Path]], n_samples: int, seed: int, frame_type: FrameType,
-                        display_mode: DisplayMode):
+                        display_mode: DisplayMode) -> None:
+        """
+        Set initial values for all configurable parameters.
+
+        :param files: Optional list of initial video file paths.
+        :param n_samples: Initial number of frames to sample.
+        :param seed: Initial random seed value.
+        :param frame_type: Initial frame type.
+        :param display_mode: Initial display mode.
+        """
+
         self.spin_box_n_samples.setValue(n_samples)
         self.spin_box_seed.setValue(seed)
         self.frame_type_dropdown.setCurrentIndex(list(FrameType).index(frame_type))
@@ -180,25 +198,33 @@ class View(QMainWindow):
 
         :param presenter: ``Presenter`` instance.
         """
+
         self.presenter = presenter
 
     @override
-    def closeEvent(self, event) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        Handle window close event by requesting application exit.
+
+        :param event: Close event object.
+        """
+
         self.exit_app_requested.emit()
         super().closeEvent(event)
 
     @override
     def show(self) -> None:
         """
-        Shows the main window and emits a signal.
+        Show main window and emit initial frame size.
         """
+
         super().show()
         self.shown.emit(self.get_max_frame_size())
 
     @override
     def resizeEvent(self, event: QResizeEvent) -> None:
         """
-        Handles window resize events.
+        Handle window resize by updating frame display size.
 
         :param event: Resize event object.
         """
@@ -235,7 +261,7 @@ class View(QMainWindow):
     @override
     def mousePressEvent(self, event: QMouseEvent) -> None:
         """
-        Handles mouse press events.
+        Handle mouse clicks by setting window focus.
 
         :param event: Mouse press event object.
         """
@@ -243,6 +269,13 @@ class View(QMainWindow):
         super().mousePressEvent(event)
 
     def display_error_message(self, message: str, window_title: str = " ") -> None:
+        """
+        Display an error message dialog to the user.
+
+        :param message: Error message to display.
+        :param window_title: Title for error dialog window.
+        """
+
         error_msg = QMessageBox(self)
         error_msg.setWindowTitle(window_title)
         error_msg.setText(message)
@@ -254,6 +287,7 @@ class View(QMainWindow):
         """
         Emits a signal when the user adds a new video source.
         """
+
         file_dialog = QFileDialog(self)
         file_dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
         file_dialog.setNameFilters(VideoFormats.get_file_filters())
@@ -273,6 +307,13 @@ class View(QMainWindow):
                     self.display_error_message(message=error_text)
 
     def on_add_sources(self, file_paths: list[tuple[Path, bool]]) -> None:
+        """
+        Process multiple added video sources.
+
+        :param file_paths: List of tuples containing a file path and their success status
+        where the status indicates if the source was added.
+        """
+
         added_paths = set(filter(lambda x: x[1], file_paths))
         discarded_paths = set(file_paths) - added_paths
 
@@ -286,14 +327,13 @@ class View(QMainWindow):
 
     def on_add_source(self, file_path: Path) -> None:
         """
-        Adds new source to the UI.
+        Add a new video source to the UI.
 
-        :param file_path: String path to the video source.
+        :param file_path: Path to the video source.
         """
 
         main_widget = QWidget()
         main_widget.setFixedHeight(40)
-        # main_widget.setStyleSheet(SOURCE_WIDGET)
 
         widget_layout = QHBoxLayout(main_widget)
         widget_layout.setContentsMargins(8, 2, 8, 2)
@@ -301,13 +341,11 @@ class View(QMainWindow):
 
         icon_label = QLabel()
         icon_label.setFixedSize(24, 24)
-        # icon_label.setStyleSheet(FILE_ICON_LABEL_STYLE)
         icon_label.setText("📁")
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         widget_layout.addWidget(icon_label)
 
         source_label = ElidingLabel(str(file_path))
-        # source_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
         file_size = file_path.stat().st_size / (1024 * 1024)
 
@@ -318,12 +356,10 @@ class View(QMainWindow):
             file_size_str = f"{file_size:7.2f} GiB"
 
         file_size_label = QLabel(file_size_str)
-        # file_size_label.setStyleSheet(SOURCE_LABEL_STYLE)
 
         delete_button = QPushButton('Delete')
         delete_button.setFixedWidth(70)
         delete_button.setCursor(Qt.CursorShape.PointingHandCursor)
-        # delete_button.setStyleSheet(DELETE_BUTTON_STYLE)
         delete_button.clicked.connect(lambda: self._on_delete_clicked(file_path))
 
         main_widget.setLayout(widget_layout)
@@ -339,10 +375,11 @@ class View(QMainWindow):
 
     def on_delete_source(self, src_idx: int) -> None:
         """
-        Deletes source from the UI.
+        Delete source from the UI.
 
         :param src_idx: Index of the deleted source.
         """
+
         widget_to_remove = self.added_sources_widgets.pop(src_idx)
         widget_to_remove.setParent(None)
         widget_to_remove.deleteLater()
@@ -351,29 +388,47 @@ class View(QMainWindow):
         self.update()
 
     def _emit_n_samples(self) -> None:
+        """
+        Emits a signal when the number of samples changes.
+        """
+
         self.n_samples_changed.emit(self.spin_box_n_samples.value())
 
     def _on_n_samples_changed(self) -> None:
+        """
+        Starts debouncing timer when number of samples changes.
+        """
+
         self._n_samples_timer.start(1000)
 
     def _emit_seed(self) -> None:
+        """
+        Emits a signal when the seed value changes.
+        """
+
         self.seed_changed.emit(self.spin_box_seed.value())
 
     def _on_seed_changed(self) -> None:
+        """
+        Starts debouncing timer when seed value changes.
+        """
+
         self._seed_timer.start(1000)
 
     def _on_delete_clicked(self, file_path: Path) -> None:
         """
         Emits a signal when the user deletes a source.
 
-        :param file_path: String path to the video source.
+        :param file_path: Path to the video source.
         """
+
         self.delete_source_requested.emit(file_path)
 
     def _on_mode_changed(self) -> None:
         """
         Emits a signal when the user changes the display mode.
         """
+
         mode = DisplayMode(self.mode_dropdown.currentText())
         self.mode_changed.emit(mode)
 
@@ -381,6 +436,7 @@ class View(QMainWindow):
         """
         Emits a signal when the user changes the frame type.
         """
+
         frame_type = FrameType(self.frame_type_dropdown.currentText())
         self.frame_type_changed.emit(frame_type)
 
@@ -390,6 +446,7 @@ class View(QMainWindow):
 
         :param view_data: Data needed to update the UI.
         """
+
         if view_data.frame is None:
             self.frame_widget.clear()
         else:

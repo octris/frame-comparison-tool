@@ -43,54 +43,101 @@ class Model:
                 logger.error(f"Could not add the following files:\n{'\n'.join(discarded_sources)}")
 
     def exit_app(self) -> None:
+        """
+        Signals to the worker to stop the running thread.
+        """
         if self.worker:
             self.worker.stop()
 
     def set_on_frames_ready_callback(self, on_frames_ready: Callable) -> None:
+        """
+        Set callback for when frames are ready.
+
+        :param on_frames_ready: Callback function to execute when frames are ready.
+        """
         self.worker.on_frames_ready.connect(on_frames_ready)
 
     def set_on_task_started_callback(self, on_task_started: Callable) -> None:
+        """
+        Set callback for when a task starts.
+
+        :param on_task_started: Callback function to execute when task begins.
+        """
+
         self.worker.on_task_started.connect(on_task_started)
 
     def set_on_task_finished_callback(self, on_task_finished: Callable) -> None:
+        """
+        Set callback for when a task finishes.
+
+        :param on_task_finished: Callback function to execute when task completes.
+        """
+
         self.worker.on_task_finished.connect(on_task_finished)
 
-    def set_on_task_failed_callback(self, on_task_failed: Callable):
+    def set_on_task_failed_callback(self, on_task_failed: Callable) -> None:
+        """
+        Set callback for when a task fails.
+
+        :param on_task_failed: Callback function to execute when task fails.
+        """
+
         self.worker.on_task_failed.connect(on_task_failed)
 
     @property
     def n_samples(self) -> int:
+        """Get number of frames to sample."""
         return self.frame_loader_manager.n_samples
 
     @property
     def frame_positions(self) -> list[int]:
+        """Get list of sampled frame positions."""
         return self.frame_loader_manager.frame_positions
 
     @property
     def sources(self) -> OrderedDict[Path, FrameLoader]:
+        """Get dictionary mapping file paths to their frame loaders."""
         return self.frame_loader_manager.sources
 
     @property
     def source_count(self) -> int:
+        """Get number of loaded video sources."""
         return len(self.sources)
 
     @property
     def seed(self) -> int:
+        """Get current seed value."""
         return self.frame_loader_manager.seed
 
     @property
     def frame_type(self) -> FrameType:
+        """Get current frame type."""
         return self.frame_loader_manager.frame_type
 
     def update_n_samples(self, n_samples: int) -> None:
+        """
+        Update number of frames to sample.
+
+        :param n_samples: New number of frames to sample.
+        """
         if n_samples != self.n_samples:
             self.frame_loader_manager.update_n_samples(n_samples)
 
     def update_seed(self, seed: int) -> None:
+        """
+        Update random seed value.
+
+        :param seed: New random seed value.
+        """
         if seed != self.seed:
             self.frame_loader_manager.update_seed(seed)
 
     def set_frame_type(self, frame_type: FrameType) -> None:
+        """
+        Set new frame type.
+
+        :param frame_type: New frame type.
+        """
         self.frame_loader_manager.frame_type = frame_type
 
     def get_current_frame(self) -> Optional[np.ndarray]:
@@ -129,17 +176,28 @@ class Model:
 
         return src_idx
 
-    def expand_frames(self, n_samples: int):
+    def expand_frames(self, n_samples: int) -> None:
+        """
+        Expands number of sampled frames.
+
+        :param n_samples: New number of frames to sample.
+        """
+
         self.frame_loader_manager.expand_frames(n_samples=n_samples)
 
     def resample_frames(self) -> None:
+        """
+        Resample frames from all sources
+        """
+
         self.worker.add_task(Task.RESAMPLE)
 
     def offset_frame(self, direction: Direction) -> None:
         """
-        Replaces current frame with the closest frame of the same type in specified direction (backward or forward).
+        Replaces current frame with the closest frame of the same frame type in
+        a specified direction (backward or forward).
 
-        :param direction: -1 for backward, 1 for forward.
+        :param direction: ``Direction`` enum.
         """
         self.worker.add_task(Task.OFFSET,
                              direction=direction,
