@@ -3,7 +3,7 @@ from typing import Optional, OrderedDict, Callable
 
 import numpy as np
 
-from frame_comparison_tool.utils import FrameLoader, FrameType, Operation, DisplayMode, Direction
+from frame_comparison_tool.utils import FrameLoader, FrameType, Task, DisplayMode, Direction
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.worker import Worker
 from loguru import logger
@@ -109,7 +109,7 @@ class Model:
         :return: ``True`` if source was successfully added, ``False`` if source already exists.
         """
         added_sources = self.frame_loader_manager.add_source(file_paths=file_paths)
-        self.worker.add_task(Operation.SAMPLE)
+        self.worker.add_task(Task.SAMPLE)
         return added_sources
 
     def delete_source(self, file_path: Path) -> int:
@@ -133,7 +133,7 @@ class Model:
         self.frame_loader_manager.expand_frames(n_samples=n_samples)
 
     def resample_frames(self) -> None:
-        self.worker.add_task(Operation.RESAMPLE)
+        self.worker.add_task(Task.RESAMPLE)
 
     def offset_frame(self, direction: Direction) -> None:
         """
@@ -141,7 +141,7 @@ class Model:
 
         :param direction: -1 for backward, 1 for forward.
         """
-        self.worker.add_task(Operation.OFFSET,
+        self.worker.add_task(Task.OFFSET,
                              direction=direction,
                              src_idx=self.curr_src_idx,
                              frame_idx=self.curr_frame_idx)

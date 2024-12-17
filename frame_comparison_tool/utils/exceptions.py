@@ -3,7 +3,7 @@ from pathlib import Path
 from frame_comparison_tool.utils.align import Align
 from frame_comparison_tool.utils.direction import Direction
 from frame_comparison_tool.utils.frame_type import FrameType
-from frame_comparison_tool.utils.operation import Operation
+from frame_comparison_tool.utils.task import Task
 
 
 class VideoCaptureFailed(Exception):
@@ -128,11 +128,11 @@ class InvalidDirectionError(ValueError):
         super().__init__(self.message)
 
 
-class InvalidOperationError(ValueError):
+class InvalidTaskError(ValueError):
     """
     Raised when an invalid ``Operation`` option is supplied.
     """
 
-    def __init__(self, operation: Operation) -> None:
-        self.message = f"Invalid operation value supplied: {operation}"
+    def __init__(self, task: Task) -> None:
+        self.message = f"Invalid task value supplied: {task}"
         super().__init__(self.message)

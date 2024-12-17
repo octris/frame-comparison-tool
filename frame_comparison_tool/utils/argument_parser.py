@@ -16,6 +16,8 @@ class CLIArgumentsParser:
 
     def __init__(self) -> None:
         self.parser: ArgumentParser = argparse.ArgumentParser(description="Frame Comparison Tool")
+        """CLI argument parser."""
+
         self._setup_arguments()
 
     def _setup_arguments(self) -> None:

@@ -10,21 +10,21 @@ class SpinningCircle(QLabel):
     """
 
     _CIRCLE_STATES: Final[list[str]] = ["◒", "◐", "◓", "◑"]
-    _ANIMATION_INTERVAL: Final[int] = 150  # milliseconds
+    _ANIMATION_INTERVAL: Final[int] = 150
     _FIXED_HEIGHT: Final[int] = 30
 
     def __init__(self) -> None:
         """
         Initialize the spinning circle loading indicator.
         """
-
         super().__init__()
 
-        self.setFixedHeight(self._FIXED_HEIGHT)
-
         self.angle: int = 0
-
+        """Index of current selected circle."""
         self.timer = QTimer()
+        """Timer used for animating circle rotation."""
+
+        self.setFixedHeight(self._FIXED_HEIGHT)
         self.timer.timeout.connect(self._rotate)
 
     def _set_text(self, text: str) -> None:

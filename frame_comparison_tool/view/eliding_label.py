@@ -20,11 +20,14 @@ class ElidingLabel(QLabel):
         :param text: The text to display in the label.
         :param elide_mode: Where to show the ellipsis when text is truncated.
         """
-
         super().__init__()
-        self.setText(text)
+
         self._text = text
+        """Text to be displayed."""
         self.elide_mode = elide_mode
+        """Mode indicating the position of the ellipsis."""
+
+        self.setText(self._text)
 
     def setElideMode(self, mode: Qt.TextElideMode) -> None:
         """

@@ -12,7 +12,15 @@ from frame_comparison_tool.utils.frame_data import FrameData
 
 class FrameLoader:
     """
-    A class for loading and managing video frames.
+    A class for loading and managing video frames from a video file.
+
+    This class provides functionality to:
+    - Load frames from a video file
+    - Navigate between frames
+    - Sample frames of specific frame type
+    - Add text (containing information about the frame) to each frame
+
+    The loader maintains the internal state of loaded frames and their metadata.
     """
 
     def __init__(self, file_path: Path):
@@ -22,7 +30,7 @@ class FrameLoader:
         :param file_path: Path to the video file to be loaded.
         """
         self._file_path: Path = file_path
-        self._video_capture: cv2.VideoCapture = cv2.VideoCapture(str(self._file_path.absolute()))
+        self._video_capture: cv2.VideoCapture = cv2.VideoCapture(filename=str(self._file_path.absolute()))
         self.frame_data: list[FrameData] = []
         self._total_frames: int = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -104,8 +112,6 @@ class FrameLoader:
         """
         Returns closest frame of specific frame type, starting from given position.
 
-        Searches for matching frame by increasing the given frame position.
-
         :param frame_position: Starting frame position to search from.
         :param frame_type: Desired frame type.
         :return: Tuple containing the position of the found frame and the frame itself.
@@ -156,11 +162,21 @@ class FrameLoader:
 
     def _get_next_frame(self, frame_position: int, direction: Direction, frame_type: FrameType) \
             -> tuple[int, np.ndarray]:
+        """
+        Retrieves the next frame in the specified search direction that matches the frame type.
+        Adds information text to the found frame.
+
+        :param frame_position: Starting frame position.
+        :param direction: Indicates either forward or backward search.
+        :param frame_type: Desired frame type.
+        :return: Tuple containing the frame position of the new frame and the new frame itself.
+        """
+
         new_frame_position, image = self._find_closest_frame(frame_position=frame_position,
                                                              direction=direction,
                                                              frame_type=frame_type)
         frame = self._get_composited_image(frame_position=new_frame_position, image=image, frame_type=frame_type)
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame = cv2.cvtColor(src=frame, code=cv2.COLOR_BGR2RGB)
 
         return new_frame_position, frame
 

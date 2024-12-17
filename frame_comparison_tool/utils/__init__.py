@@ -6,4 +6,4 @@ from frame_comparison_tool.utils.display_mode import DisplayMode
 from frame_comparison_tool.utils.view_data import ViewData
 from frame_comparison_tool.utils.path_check import check_path
 from frame_comparison_tool.utils.argument_parser import CLIArgumentsParser
-from frame_comparison_tool.utils.operation import Operation
+from frame_comparison_tool.utils.task import Task

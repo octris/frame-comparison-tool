@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class Operation(Enum):
+class Task(Enum):
     """
     Enumeration representing possible ``Worker`` tasks.
     """
