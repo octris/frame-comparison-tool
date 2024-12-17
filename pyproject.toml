@@ -6,7 +6,7 @@ authors = ["Ana Anić Banić <git@ana.banic.hr>"]
 # readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.13"
+python = ">=3.10,<3.13"
 opencv-contrib-python = "^4.10.0.84"
 pillow = "^11.0.0"
 pyside6 = "6.7.3" # TODO: Update after issue with QMessageBox is fixed
