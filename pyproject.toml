@@ -6,11 +6,19 @@ authors = ["Ana Anić Banić <git@ana.banic.hr>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.12"
-
-loguru = "^0.7.2"
+python = ">=3.10,<3.13"
 opencv-contrib-python = "^4.10.0.84"
+pillow = "^11.0.0"
+pyside6 = "6.7.3" # TODO: Update after issue with QMessageBox is fixed
+aenum = "^3.1.15"
+loguru = "^0.7.3"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry-pyinstaller-plugin]
+disable-upx = true
+
+[tool.poetry-pyinstaller-plugin.scripts]
+frame-comparison-tool = { source = "frame_comparison_tool/__main__.py", type = "onefile", bundle = true }
