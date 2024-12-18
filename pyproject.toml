@@ -3,7 +3,7 @@ name = "frame-comparison-tool"
 version = "0.1.0"
 description = ""
 authors = ["Ana Anić Banić <git@ana.banic.hr>"]
-# readme = "README.md"
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
