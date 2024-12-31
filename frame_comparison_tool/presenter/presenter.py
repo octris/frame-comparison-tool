@@ -236,7 +236,7 @@ class Presenter:
         self.view.display_error_message(
             message=f"A problem occurred with the following video file(s):"
                     f"\n{'\n'.join(str(source) for source in sources)}\n"
-                    f"These files WILL BE REMOVED!"
+                    f"These files will be removed from the list!"
         )
         for source in sources:
             self.delete_source(file_path=source)
