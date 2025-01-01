@@ -32,7 +32,32 @@ class FrameLoader:
         self._file_path: Path = file_path
         self._video_capture: cv2.VideoCapture = cv2.VideoCapture(filename=str(self._file_path.absolute()))
         self.frame_data: list[FrameData] = []
-        self._total_frames: int = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self._total_frames: int = self._get_frame_count()
+
+    def _get_frame_count(self) -> int:
+        """
+        Returns the true total number of frames in the video file.
+        """
+
+        r_frame_idx = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT)) - 1
+        l_frame_idx = 0
+
+        last_valid_index = 0
+
+        while l_frame_idx <= r_frame_idx:
+            mid_frame_idx = (l_frame_idx + r_frame_idx) // 2
+
+            try:
+                self._set_frame_pos(mid_frame_idx)
+                self._get_frame()
+
+                last_valid_index = mid_frame_idx
+                l_frame_idx = mid_frame_idx + 1
+
+            except (FramePositionError, ImageReadError, VideoCaptureFailed) as e:
+                r_frame_idx = mid_frame_idx - 1
+
+        return last_valid_index
 
     @property
     def file_name(self) -> str:
@@ -147,9 +172,13 @@ class FrameLoader:
         frame_type: FrameType = self.frame_data[frame_idx].frame_type
 
         if direction == Direction.FORWARD or direction == Direction.BACKWARD:
-            real_frame_position, frame = self._get_next_frame(frame_position=starting_position,
-                                                              direction=direction,
-                                                              frame_type=frame_type)
+            try:
+                real_frame_position, frame = self._get_next_frame(frame_position=starting_position,
+                                                                  direction=direction,
+                                                                  frame_type=frame_type)
+            except NoMatchingFrameTypeError:
+                real_frame_position = self.frame_data[frame_idx].real_frame_position
+                frame = self.frame_data[frame_idx].frame
         else:
             raise InvalidDirectionError(direction)
 
@@ -180,6 +209,7 @@ class FrameLoader:
 
         return new_frame_position, frame
 
+    # TODO: Raise error to user
     def sample_frames(self, frame_positions: list[int], frame_type: FrameType) -> None:
         """
         Samples frames based on the given starting frame indices and desired frame type.
@@ -196,13 +226,16 @@ class FrameLoader:
                     and self.frame_data[idx].frame_type == frame_type):
                 continue
 
-            real_frame_position, frame = self._get_next_frame(frame_position=original_frame_position,
-                                                              direction=Direction(1),
-                                                              frame_type=frame_type)
-            frame_data = FrameData(original_frame_position=original_frame_position,
-                                   real_frame_position=real_frame_position,
-                                   frame=frame,
-                                   frame_type=frame_type)
+            try:
+                real_frame_position, frame = self._get_next_frame(frame_position=original_frame_position,
+                                                                  direction=Direction(1),
+                                                                  frame_type=frame_type)
+                frame_data = FrameData(original_frame_position=original_frame_position,
+                                       real_frame_position=real_frame_position,
+                                       frame=frame,
+                                       frame_type=frame_type)
+            except NoMatchingFrameTypeError:
+                pass
 
             buffer.append((idx, frame_data))
 

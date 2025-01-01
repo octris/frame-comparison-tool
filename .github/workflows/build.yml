@@ -68,4 +68,4 @@ jobs:
         with:
           name: dist-${{ runner.os }}-${{ matrix.python-version }}
           path: dist/**
-          retention-days: 7
+          retention-days: 90
