@@ -20,8 +20,7 @@ class Model:
         Initializes a ``Model`` instance.
         """
 
-        self.frame_loader_manager = FrameLoaderManager(files=files, n_samples=n_samples, seed=seed,
-                                                       frame_type=frame_type)
+        self.frame_loader_manager = FrameLoaderManager(n_samples=n_samples, seed=seed, frame_type=frame_type)
         """Instance of ``FrameLoaderManager`` responsible for handling all video sources and frames."""
         self.curr_src_idx: int = 0
         """Index of current video source."""
@@ -83,6 +82,15 @@ class Model:
         """
 
         self.worker.on_task_failed.connect(on_task_failed)
+
+    def set_on_task_failed_invalid_sources_callback(self, on_task_failed_invalid_sources: Callable) -> None:
+        """
+        Set callback for when a task fails due to invalid sources.
+
+        :param on_task_failed_invalid_sources: Callback function to execute when task fails due to invalid sources.
+        """
+
+        self.worker.on_task_failed_invalid_sources.connect(on_task_failed_invalid_sources)
 
     @property
     def n_samples(self) -> int:

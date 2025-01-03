@@ -8,6 +8,7 @@ from frame_comparison_tool.utils import put_bordered_text, Align, FrameType, Dir
 from frame_comparison_tool.utils.exceptions import NoMatchingFrameTypeError, ImageReadError, VideoCaptureFailed, \
     FramePositionError, InvalidDirectionError
 from frame_comparison_tool.utils.frame_data import FrameData
+from frame_comparison_tool.utils.config import MAX_FRAMES_TO_SEARCH
 
 
 class FrameLoader:
@@ -48,7 +49,7 @@ class FrameLoader:
             mid_frame_idx = (l_frame_idx + r_frame_idx) // 2
 
             try:
-                self._set_frame_pos(mid_frame_idx)
+                self._set_frame_position(mid_frame_idx)
                 self._get_frame()
 
                 last_valid_index = mid_frame_idx
@@ -94,7 +95,7 @@ class FrameLoader:
         else:
             raise VideoCaptureFailed()
 
-    def _set_frame_pos(self, frame_position: int) -> None:
+    def _set_frame_position(self, frame_position: int) -> None:
         """
         Sets the ``VideoCapture`` object to a specific frame position.
 
@@ -142,9 +143,12 @@ class FrameLoader:
         :return: Tuple containing the position of the found frame and the frame itself.
         :raises ``NoMatchingFrameTypeError``: If no frame of matching type was found.
         """
-        self._set_frame_pos(frame_position)
+        self._set_frame_position(frame_position)
 
-        while 0 <= frame_position < self.total_frames:
+        min_frames_delta: int = frame_position - MAX_FRAMES_TO_SEARCH
+        max_frames_delta: int = frame_position + MAX_FRAMES_TO_SEARCH
+
+        while max(0, min_frames_delta) <= frame_position < min(self.total_frames, max_frames_delta):
             curr_frame_type = self._get_frame_type()
             curr_frame = self._get_frame()
 
@@ -154,7 +158,7 @@ class FrameLoader:
                 frame_position += direction
 
             if direction == Direction.BACKWARD and frame_position >= 0:
-                self._set_frame_pos(frame_position)
+                self._set_frame_position(frame_position)
 
         raise NoMatchingFrameTypeError(frame_type.value)
 
@@ -209,7 +213,6 @@ class FrameLoader:
 
         return new_frame_position, frame
 
-    # TODO: Raise error to user
     def sample_frames(self, frame_positions: list[int], frame_type: FrameType) -> None:
         """
         Samples frames based on the given starting frame indices and desired frame type.
@@ -226,16 +229,13 @@ class FrameLoader:
                     and self.frame_data[idx].frame_type == frame_type):
                 continue
 
-            try:
-                real_frame_position, frame = self._get_next_frame(frame_position=original_frame_position,
-                                                                  direction=Direction(1),
-                                                                  frame_type=frame_type)
-                frame_data = FrameData(original_frame_position=original_frame_position,
-                                       real_frame_position=real_frame_position,
-                                       frame=frame,
-                                       frame_type=frame_type)
-            except NoMatchingFrameTypeError:
-                pass
+            real_frame_position, frame = self._get_next_frame(frame_position=original_frame_position,
+                                                              direction=Direction(1),
+                                                              frame_type=frame_type)
+            frame_data = FrameData(original_frame_position=original_frame_position,
+                                   real_frame_position=real_frame_position,
+                                   frame=frame,
+                                   frame_type=frame_type)
 
             buffer.append((idx, frame_data))
 

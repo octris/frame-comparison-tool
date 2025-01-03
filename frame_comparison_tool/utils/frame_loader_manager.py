@@ -6,9 +6,11 @@ from sys import maxsize
 from typing import Optional
 
 import numpy as np
+from loguru import logger
 
 from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
-from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError
+from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError, VideoCaptureFailed, \
+    NoMatchingFrameTypeError
 
 
 class FrameLoaderManager:
@@ -19,7 +21,7 @@ class FrameLoaderManager:
     including frame sampling, position tracking, and error handling across all sources.
     """
 
-    def __init__(self, files: Optional[list[Path]], n_samples: int, seed: int, frame_type: FrameType):
+    def __init__(self, n_samples: int, seed: int, frame_type: FrameType):
         self.sources: OrderedDict[Path, FrameLoader] = OrderedDict({})
         """Dictionary mapping file path to ``FrameLoader`` object."""
         self.n_samples: int = n_samples
@@ -184,7 +186,7 @@ class FrameLoaderManager:
             self.frame_positions = self.frame_positions[:idx]
             self.frame_positions.extend(new_frame_positions)
 
-        errors: list[ImageReadError] = []
+        errors: list[ImageReadError or VideoCaptureFailed] = []
 
         for frame_loader in frame_loaders:
             try:
@@ -192,7 +194,7 @@ class FrameLoaderManager:
                     frame_positions=self.frame_positions,
                     frame_type=self.frame_type
                 )
-            except ImageReadError as e:
+            except (ImageReadError, VideoCaptureFailed) as e:
                 errors.append(e)
 
         if errors:

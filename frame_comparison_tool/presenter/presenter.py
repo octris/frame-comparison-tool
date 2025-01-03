@@ -45,6 +45,7 @@ class Presenter:
         self.model.set_on_task_started_callback(self._start_loading)
         self.model.set_on_task_finished_callback(self._stop_loading)
         self.model.set_on_task_failed_callback(self._stop_task)
+        self.model.set_on_task_failed_invalid_sources_callback(self._stop_task_and_delete_sources)
 
     def _connect_signals(self) -> None:
         """
@@ -225,19 +226,29 @@ class Presenter:
 
         self.view.loading_circle.stop()
 
-    def _stop_task(self, sources: list[Path]) -> None:
+    def _stop_task(self, message: str) -> None:
+        """
+        Handle task failure by informing the user of the occurred error.
+
+        :param message: Error message.
+        """
+
+        self._stop_loading()
+        self.view.display_error_message(message=message)
+        self.update_display()
+
+    def _stop_task_and_delete_sources(self, sources: list[Path]) -> None:
         """
         Handle task failure by removing problematic sources.
 
         :param sources: List of source paths that caused errors.
         """
 
-        self._stop_loading()
-        self.view.display_error_message(
+        for source in sources:
+            self.delete_source(file_path=source)
+
+        self._stop_task(
             message=f"A problem occurred with the following video file(s):"
                     f"\n{'\n'.join(str(source) for source in sources)}\n"
                     f"These files will be removed from the list!"
         )
-        for source in sources:
-            self.delete_source(file_path=source)
-        self.update_display()
