@@ -16,5 +16,9 @@ class Task(Enum):
     """
     OFFSET = 'Offset'
     """
-    Offset frames.
+    Offset frame.
+    """
+    OFFSET_ALL = "Offset all"
+    """
+    Offset all frames.
     """

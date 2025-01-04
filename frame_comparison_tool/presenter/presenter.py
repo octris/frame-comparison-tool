@@ -65,6 +65,7 @@ class Presenter:
         self.view.shown.connect(self.resize_frame)
         self.view.exit_app_requested.connect(self._exit_app)
         self.view.save_images_requested.connect(self._save_frames)
+        self.view.offset_all_frames_requested.connect(self.offset_all_frames)
 
     def _exit_app(self) -> None:
         """
@@ -124,7 +125,17 @@ class Presenter:
 
         :param direction: The direction of the frame offset.
         """
-        self.model.offset_frame(direction)
+        self.model.offset_current_frame(direction)
+        self.update_display()
+
+    def offset_all_frames(self, direction: Direction) -> None:
+        """
+        Offsets all frames of one source and updates the display.
+
+        :param direction: The direction of the frame offset.
+        """
+
+        self.model.offset_all_frames(direction)
         self.update_display()
 
     def change_frame_type(self, frame_type: FrameType) -> None:

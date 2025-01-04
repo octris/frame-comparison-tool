@@ -154,6 +154,19 @@ class FrameLoaderManager:
         source = self.get_source(src_idx=src_idx)
         source.offset(frame_idx=frame_idx, direction=direction)
 
+    def offset_all_frames(self, direction: Direction, src_idx: int) -> None:
+        """
+        Offset all frames of a source in a specified direction.
+
+        :param direction: Direction to move all frames.
+        :param src_idx: Index of the source video.
+        """
+
+        source = self.get_source(src_idx=src_idx)
+
+        for frame_idx, _ in enumerate(source.frame_data):
+            source.offset(frame_idx=frame_idx, direction=direction)
+
     def clear_frame_positions(self) -> None:
         """
         Clear all stored frame positions.

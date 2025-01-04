@@ -108,6 +108,10 @@ class Worker(QThread):
                 self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"),
                                                        src_idx=kwargs.get("src_idx"),
                                                        frame_idx=kwargs.get("frame_idx"))
+            elif task == Task.OFFSET_ALL:
+                self.frame_loader_manager.offset_all_frames(direction=kwargs.get("direction"),
+                                                            src_idx=kwargs.get("src_idx"))
+
             else:
                 raise InvalidTaskError(task)
 

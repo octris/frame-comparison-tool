@@ -200,7 +200,7 @@ class Model:
 
         self.worker.add_task(Task.RESAMPLE)
 
-    def offset_frame(self, direction: Direction) -> None:
+    def offset_current_frame(self, direction: Direction) -> None:
         """
         Replaces current frame with the closest frame of the same frame type in
         a specified direction (backward or forward).
@@ -211,6 +211,18 @@ class Model:
                              direction=direction,
                              src_idx=self.curr_src_idx,
                              frame_idx=self.curr_frame_idx)
+
+    def offset_all_frames(self, direction: Direction) -> None:
+        """
+        Replaces all frames of one source with the closest frames of the same frame type in
+        a specified direction (backward or forward).
+
+        :param direction: ``Direction`` enum.
+        """
+
+        self.worker.add_task(Task.OFFSET_ALL,
+                             direction=direction,
+                             src_idx=self.curr_src_idx)
 
     def save_frames(self, formatted_date: str) -> None:
         """
