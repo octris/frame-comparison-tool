@@ -211,3 +211,11 @@ class Model:
                              direction=direction,
                              src_idx=self.curr_src_idx,
                              frame_idx=self.curr_frame_idx)
+
+    def save_frames(self, formatted_date: str) -> None:
+        """
+        Saves frames to the current working directory.
+
+        :param formatted_date: Formatted date to be used as directory name.
+        """
+        self.frame_loader_manager.save_frames(formatted_date=formatted_date)

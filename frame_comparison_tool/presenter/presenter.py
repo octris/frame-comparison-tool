@@ -64,6 +64,7 @@ class Presenter:
         self.view.n_samples_changed.connect(self.change_n_samples)
         self.view.shown.connect(self.resize_frame)
         self.view.exit_app_requested.connect(self._exit_app)
+        self.view.save_images_requested.connect(self._save_frames)
 
     def _exit_app(self) -> None:
         """
@@ -252,3 +253,12 @@ class Presenter:
                     f"\n{'\n'.join(str(source) for source in sources)}\n"
                     f"These files will be removed from the list!"
         )
+
+    def _save_frames(self, formatted_date: str) -> None:
+        """
+        Handles saving frames to current directory.
+
+        :param formatted_date: Formatted date to be used as directory name.
+        """
+
+        self.model.save_frames(formatted_date=formatted_date)

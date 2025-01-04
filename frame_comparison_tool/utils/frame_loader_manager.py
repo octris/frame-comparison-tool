@@ -6,11 +6,10 @@ from sys import maxsize
 from typing import Optional
 
 import numpy as np
-from loguru import logger
+from PIL import Image
 
 from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
-from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError, VideoCaptureFailed, \
-    NoMatchingFrameTypeError
+from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError, VideoCaptureFailed
 
 
 class FrameLoaderManager:
@@ -32,6 +31,24 @@ class FrameLoaderManager:
         """List of frame indices, range (0, `total_frames - 1`)."""
         self.frame_type: FrameType = frame_type
         """Current frame type."""
+
+    def save_frames(self, formatted_date: str) -> None:
+        """
+        Iterates through all sources and saves frames to the current working directory.
+
+        :param formatted_date: Formatted date to be used as directory name.
+        """
+
+        if self.sources:
+            current_dir = Path.cwd()
+            frames_dir = current_dir / formatted_date
+            frames_dir.mkdir(exist_ok=True)
+
+            for src_idx, frame_loader in enumerate(self.sources.values()):
+                for frame_idx, frame in enumerate(f.frame for f in frame_loader.frame_data):
+                    image_path = frames_dir / f"{src_idx + 1}_{frame_idx + 1}.png"
+                    image = Image.fromarray(frame)
+                    image.save(image_path)
 
     def update_n_samples(self, n_samples: int) -> None:
         """
