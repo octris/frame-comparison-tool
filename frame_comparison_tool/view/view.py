@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import override, Optional
 
@@ -47,6 +48,8 @@ class View(QMainWindow):
     n_samples_changed = Signal(int)
     shown = Signal(tuple)
     exit_app_requested = Signal()
+    save_images_requested = Signal(str)
+    offset_all_frames_requested = Signal(Direction)
 
     def __init__(self):
         """
@@ -240,6 +243,8 @@ class View(QMainWindow):
         - Left/Right arrows: Change frame
         - Up/Down arrows: Change source
         - Plus/Minus: Offset frame
+        - Ctrl + S: Save frames
+        - Ctrl + Plus/Minus: Offset all frames of a certain source
 
         :param event: Key event object.
         """
@@ -251,10 +256,17 @@ class View(QMainWindow):
             self.source_changed.emit(Direction(-1))
         elif event.key() == Qt.Key.Key_Up:
             self.source_changed.emit(Direction(1))
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_Plus:
+            self.offset_all_frames_requested.emit(Direction(1))
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_Minus:
+            self.offset_all_frames_requested.emit(Direction(-1))
         elif event.key() == Qt.Key.Key_Plus:
             self.offset_changed.emit(Direction(1))
         elif event.key() == Qt.Key.Key_Minus:
             self.offset_changed.emit(Direction(-1))
+        elif event.modifiers() == Qt.KeyboardModifier.ControlModifier and event.key() == Qt.Key.Key_S:
+            formatted_date = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            self.save_images_requested.emit(formatted_date)
 
         return super().keyPressEvent(event)
 

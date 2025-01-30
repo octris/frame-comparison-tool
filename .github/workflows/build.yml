@@ -47,7 +47,7 @@ jobs:
           virtualenvs-in-project: true
 
       - name: Install PyInstaller plugin for Poetry
-        run: poetry self add poetry-pyinstaller-plugin==1.1.10
+        run: poetry self add poetry-pyinstaller-plugin==1.3.0
 
       - name: Load cached Poetry virtualenv
         id: cached-poetry-dependencies
@@ -68,4 +68,4 @@ jobs:
         with:
           name: dist-${{ runner.os }}-${{ matrix.python-version }}
           path: dist/**
-          retention-days: 7
+          retention-days: 90

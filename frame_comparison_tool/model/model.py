@@ -20,8 +20,7 @@ class Model:
         Initializes a ``Model`` instance.
         """
 
-        self.frame_loader_manager = FrameLoaderManager(files=files, n_samples=n_samples, seed=seed,
-                                                       frame_type=frame_type)
+        self.frame_loader_manager = FrameLoaderManager(n_samples=n_samples, seed=seed, frame_type=frame_type)
         """Instance of ``FrameLoaderManager`` responsible for handling all video sources and frames."""
         self.curr_src_idx: int = 0
         """Index of current video source."""
@@ -83,6 +82,15 @@ class Model:
         """
 
         self.worker.on_task_failed.connect(on_task_failed)
+
+    def set_on_task_failed_invalid_sources_callback(self, on_task_failed_invalid_sources: Callable) -> None:
+        """
+        Set callback for when a task fails due to invalid sources.
+
+        :param on_task_failed_invalid_sources: Callback function to execute when task fails due to invalid sources.
+        """
+
+        self.worker.on_task_failed_invalid_sources.connect(on_task_failed_invalid_sources)
 
     @property
     def n_samples(self) -> int:
@@ -192,7 +200,7 @@ class Model:
 
         self.worker.add_task(Task.RESAMPLE)
 
-    def offset_frame(self, direction: Direction) -> None:
+    def offset_current_frame(self, direction: Direction) -> None:
         """
         Replaces current frame with the closest frame of the same frame type in
         a specified direction (backward or forward).
@@ -203,3 +211,23 @@ class Model:
                              direction=direction,
                              src_idx=self.curr_src_idx,
                              frame_idx=self.curr_frame_idx)
+
+    def offset_all_frames(self, direction: Direction) -> None:
+        """
+        Replaces all frames of one source with the closest frames of the same frame type in
+        a specified direction (backward or forward).
+
+        :param direction: ``Direction`` enum.
+        """
+
+        self.worker.add_task(Task.OFFSET_ALL,
+                             direction=direction,
+                             src_idx=self.curr_src_idx)
+
+    def save_frames(self, formatted_date: str) -> None:
+        """
+        Saves frames to the current working directory.
+
+        :param formatted_date: Formatted date to be used as directory name.
+        """
+        self.frame_loader_manager.save_frames(formatted_date=formatted_date)

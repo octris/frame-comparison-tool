@@ -1,11 +1,10 @@
-from pathlib import Path
 from queue import Queue
-from threading import Lock
-from typing import override, Optional, Any, Dict, Callable
+from typing import override, Optional, Any, Dict
 
 from PySide6.QtCore import QThread, Signal
 
-from frame_comparison_tool.utils.exceptions import InvalidTaskError, MultipleSourcesImageReadError
+from frame_comparison_tool.utils.exceptions import InvalidTaskError, MultipleSourcesImageReadError, \
+    NoMatchingFrameTypeError
 from frame_comparison_tool.utils.frame_loader_manager import FrameLoaderManager
 from frame_comparison_tool.utils.task import Task
 
@@ -26,7 +25,8 @@ class Worker(QThread):
     on_frames_ready: Signal = Signal()
     on_task_started: Signal = Signal()
     on_task_finished: Signal = Signal()
-    on_task_failed: Signal = Signal(Path)
+    on_task_failed: Signal = Signal(str)
+    on_task_failed_invalid_sources: Signal = Signal(list)
 
     def __init__(self, frame_loader_manager: FrameLoaderManager):
         """
@@ -92,16 +92,26 @@ class Worker(QThread):
                 try:
                     self.frame_loader_manager.sample_all_frames()
                 except MultipleSourcesImageReadError as e:
-                    self.on_task_failed.emit(e.sources)
+                    self.on_task_failed_invalid_sources.emit(e.sources)
+                except NoMatchingFrameTypeError as e:
+                    self.on_task_failed.emit(e.message)
+
             elif task == Task.SAMPLE:
                 try:
                     self.frame_loader_manager.sample_all_frames()
                 except MultipleSourcesImageReadError as e:
-                    self.on_task_failed.emit(e.sources)
+                    self.on_task_failed_invalid_sources.emit(e.sources)
+                except NoMatchingFrameTypeError as e:
+                    self.on_task_failed.emit(e.message)
+
             elif task == Task.OFFSET:
                 self.frame_loader_manager.offset_frame(direction=kwargs.get("direction"),
                                                        src_idx=kwargs.get("src_idx"),
                                                        frame_idx=kwargs.get("frame_idx"))
+            elif task == Task.OFFSET_ALL:
+                self.frame_loader_manager.offset_all_frames(direction=kwargs.get("direction"),
+                                                            src_idx=kwargs.get("src_idx"))
+
             else:
                 raise InvalidTaskError(task)
 

@@ -8,6 +8,7 @@ from frame_comparison_tool.utils import put_bordered_text, Align, FrameType, Dir
 from frame_comparison_tool.utils.exceptions import NoMatchingFrameTypeError, ImageReadError, VideoCaptureFailed, \
     FramePositionError, InvalidDirectionError
 from frame_comparison_tool.utils.frame_data import FrameData
+from frame_comparison_tool.utils.config import MAX_FRAMES_TO_SEARCH
 
 
 class FrameLoader:
@@ -32,7 +33,32 @@ class FrameLoader:
         self._file_path: Path = file_path
         self._video_capture: cv2.VideoCapture = cv2.VideoCapture(filename=str(self._file_path.absolute()))
         self.frame_data: list[FrameData] = []
-        self._total_frames: int = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self._total_frames: int = self._get_frame_count()
+
+    def _get_frame_count(self) -> int:
+        """
+        Returns the true total number of frames in the video file.
+        """
+
+        r_frame_idx = int(self._video_capture.get(cv2.CAP_PROP_FRAME_COUNT)) - 1
+        l_frame_idx = 0
+
+        last_valid_index = 0
+
+        while l_frame_idx <= r_frame_idx:
+            mid_frame_idx = (l_frame_idx + r_frame_idx) // 2
+
+            try:
+                self._set_frame_position(mid_frame_idx)
+                self._get_frame()
+
+                last_valid_index = mid_frame_idx
+                l_frame_idx = mid_frame_idx + 1
+
+            except (FramePositionError, ImageReadError, VideoCaptureFailed) as e:
+                r_frame_idx = mid_frame_idx - 1
+
+        return last_valid_index
 
     @property
     def file_name(self) -> str:
@@ -69,7 +95,7 @@ class FrameLoader:
         else:
             raise VideoCaptureFailed()
 
-    def _set_frame_pos(self, frame_position: int) -> None:
+    def _set_frame_position(self, frame_position: int) -> None:
         """
         Sets the ``VideoCapture`` object to a specific frame position.
 
@@ -117,9 +143,12 @@ class FrameLoader:
         :return: Tuple containing the position of the found frame and the frame itself.
         :raises ``NoMatchingFrameTypeError``: If no frame of matching type was found.
         """
-        self._set_frame_pos(frame_position)
+        self._set_frame_position(frame_position)
 
-        while 0 <= frame_position < self.total_frames:
+        min_frames_delta: int = frame_position - MAX_FRAMES_TO_SEARCH
+        max_frames_delta: int = frame_position + MAX_FRAMES_TO_SEARCH
+
+        while max(0, min_frames_delta) <= frame_position < min(self.total_frames, max_frames_delta):
             curr_frame_type = self._get_frame_type()
             curr_frame = self._get_frame()
 
@@ -129,7 +158,7 @@ class FrameLoader:
                 frame_position += direction
 
             if direction == Direction.BACKWARD and frame_position >= 0:
-                self._set_frame_pos(frame_position)
+                self._set_frame_position(frame_position)
 
         raise NoMatchingFrameTypeError(frame_type.value)
 
@@ -147,9 +176,13 @@ class FrameLoader:
         frame_type: FrameType = self.frame_data[frame_idx].frame_type
 
         if direction == Direction.FORWARD or direction == Direction.BACKWARD:
-            real_frame_position, frame = self._get_next_frame(frame_position=starting_position,
-                                                              direction=direction,
-                                                              frame_type=frame_type)
+            try:
+                real_frame_position, frame = self._get_next_frame(frame_position=starting_position,
+                                                                  direction=direction,
+                                                                  frame_type=frame_type)
+            except NoMatchingFrameTypeError:
+                real_frame_position = self.frame_data[frame_idx].real_frame_position
+                frame = self.frame_data[frame_idx].frame
         else:
             raise InvalidDirectionError(direction)
 

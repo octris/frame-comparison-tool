@@ -6,9 +6,10 @@ from sys import maxsize
 from typing import Optional
 
 import numpy as np
+from PIL import Image
 
 from frame_comparison_tool.utils import FrameLoader, FrameType, Direction
-from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError
+from frame_comparison_tool.utils.exceptions import ImageReadError, MultipleSourcesImageReadError, VideoCaptureFailed
 
 
 class FrameLoaderManager:
@@ -19,7 +20,7 @@ class FrameLoaderManager:
     including frame sampling, position tracking, and error handling across all sources.
     """
 
-    def __init__(self, files: Optional[list[Path]], n_samples: int, seed: int, frame_type: FrameType):
+    def __init__(self, n_samples: int, seed: int, frame_type: FrameType):
         self.sources: OrderedDict[Path, FrameLoader] = OrderedDict({})
         """Dictionary mapping file path to ``FrameLoader`` object."""
         self.n_samples: int = n_samples
@@ -30,6 +31,24 @@ class FrameLoaderManager:
         """List of frame indices, range (0, `total_frames - 1`)."""
         self.frame_type: FrameType = frame_type
         """Current frame type."""
+
+    def save_frames(self, formatted_date: str) -> None:
+        """
+        Iterates through all sources and saves frames to the current working directory.
+
+        :param formatted_date: Formatted date to be used as directory name.
+        """
+
+        if self.sources:
+            current_dir = Path.cwd()
+            frames_dir = current_dir / formatted_date
+            frames_dir.mkdir(exist_ok=True)
+
+            for src_idx, frame_loader in enumerate(self.sources.values()):
+                for frame_idx, frame in enumerate(f.frame for f in frame_loader.frame_data):
+                    image_path = frames_dir / f"{src_idx + 1}_{frame_idx + 1}.png"
+                    image = Image.fromarray(frame)
+                    image.save(image_path)
 
     def update_n_samples(self, n_samples: int) -> None:
         """
@@ -135,6 +154,19 @@ class FrameLoaderManager:
         source = self.get_source(src_idx=src_idx)
         source.offset(frame_idx=frame_idx, direction=direction)
 
+    def offset_all_frames(self, direction: Direction, src_idx: int) -> None:
+        """
+        Offset all frames of a source in a specified direction.
+
+        :param direction: Direction to move all frames.
+        :param src_idx: Index of the source video.
+        """
+
+        source = self.get_source(src_idx=src_idx)
+
+        for frame_idx, _ in enumerate(source.frame_data):
+            source.offset(frame_idx=frame_idx, direction=direction)
+
     def clear_frame_positions(self) -> None:
         """
         Clear all stored frame positions.
@@ -184,7 +216,7 @@ class FrameLoaderManager:
             self.frame_positions = self.frame_positions[:idx]
             self.frame_positions.extend(new_frame_positions)
 
-        errors: list[ImageReadError] = []
+        errors: list[ImageReadError or VideoCaptureFailed] = []
 
         for frame_loader in frame_loaders:
             try:
@@ -192,7 +224,7 @@ class FrameLoaderManager:
                     frame_positions=self.frame_positions,
                     frame_type=self.frame_type
                 )
-            except ImageReadError as e:
+            except (ImageReadError, VideoCaptureFailed) as e:
                 errors.append(e)
 
         if errors:

@@ -42,16 +42,15 @@ class MultipleSourcesImageReadError(Exception):
     Raised when ``ImageReadError`` occurs multiple times.
     """
 
-    def __init__(self, errors: list[ImageReadError], message="Could not read image"):
+    def __init__(self, errors: list[ImageReadError or VideoCaptureFailed]):
         """
         Initialize a ``MultipleSourcesImageReadError`` instance.
 
         :param errors: List of ``ImageReadError`` instances.
-        :param message: Error message to display.
         """
 
         self.sources: list[Path] = [error.source for error in errors]
-        self.message = message
+        self.message = f"Could not read image from one or multiple sources."
         super().__init__(self.message)
 
 

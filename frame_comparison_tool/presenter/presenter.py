@@ -45,6 +45,7 @@ class Presenter:
         self.model.set_on_task_started_callback(self._start_loading)
         self.model.set_on_task_finished_callback(self._stop_loading)
         self.model.set_on_task_failed_callback(self._stop_task)
+        self.model.set_on_task_failed_invalid_sources_callback(self._stop_task_and_delete_sources)
 
     def _connect_signals(self) -> None:
         """
@@ -63,6 +64,8 @@ class Presenter:
         self.view.n_samples_changed.connect(self.change_n_samples)
         self.view.shown.connect(self.resize_frame)
         self.view.exit_app_requested.connect(self._exit_app)
+        self.view.save_images_requested.connect(self._save_frames)
+        self.view.offset_all_frames_requested.connect(self.offset_all_frames)
 
     def _exit_app(self) -> None:
         """
@@ -122,7 +125,17 @@ class Presenter:
 
         :param direction: The direction of the frame offset.
         """
-        self.model.offset_frame(direction)
+        self.model.offset_current_frame(direction)
+        self.update_display()
+
+    def offset_all_frames(self, direction: Direction) -> None:
+        """
+        Offsets all frames of one source and updates the display.
+
+        :param direction: The direction of the frame offset.
+        """
+
+        self.model.offset_all_frames(direction)
         self.update_display()
 
     def change_frame_type(self, frame_type: FrameType) -> None:
@@ -225,19 +238,38 @@ class Presenter:
 
         self.view.loading_circle.stop()
 
-    def _stop_task(self, sources: list[Path]) -> None:
+    def _stop_task(self, message: str) -> None:
+        """
+        Handle task failure by informing the user of the occurred error.
+
+        :param message: Error message.
+        """
+
+        self._stop_loading()
+        self.view.display_error_message(message=message)
+        self.update_display()
+
+    def _stop_task_and_delete_sources(self, sources: list[Path]) -> None:
         """
         Handle task failure by removing problematic sources.
 
         :param sources: List of source paths that caused errors.
         """
 
-        self._stop_loading()
-        self.view.display_error_message(
-            message=f"A problem occurred with the following video file(s):"
-                    f"\n{'\n'.join(str(source) for source in sources)}\n"
-                    f"These files WILL BE REMOVED!"
-        )
         for source in sources:
             self.delete_source(file_path=source)
-        self.update_display()
+
+        self._stop_task(
+            message=f"A problem occurred with the following video file(s):"
+                    f"\n{'\n'.join(str(source) for source in sources)}\n"
+                    f"These files will be removed from the list!"
+        )
+
+    def _save_frames(self, formatted_date: str) -> None:
+        """
+        Handles saving frames to current directory.
+
+        :param formatted_date: Formatted date to be used as directory name.
+        """
+
+        self.model.save_frames(formatted_date=formatted_date)
